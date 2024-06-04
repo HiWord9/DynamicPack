@@ -10,8 +10,12 @@ A mod that will monitor the current version of your resource pack and download a
 
 ## Packs using it mod
 * [CursedEveriday](https://github.com/AdamCalculator/CursedEveryday) by Adam - pack from the creator, on it you can learn how it works
-* [better-moss](https://modrinth.com/resourcepack/better-moss)
-* [bettertables](https://modrinth.com/resourcepack/bettertables)
+* [Better Tables (modrinth)](https://modrinth.com/resourcepack/bettertables)
+* [Better Moss (modrinth)](https://modrinth.com/resourcepack/better-moss)
+* [ModsRU (modrinth)](https://modrinth.com/resourcepack/mods-ru)
+* [zelda-music (modrinth)](https://modrinth.com/resourcepack/zelda-music)
+* [PawTotems (smp) (github)](https://github.com/Spilya/PawTotems/)
+* [SPPack (smp) (github)](https://github.com/aladairmaxwell/SP)
 
 ## Plans
 The mod is planned to support **any bootloader** and any version, but I don't have enough time right now. **I'm always happy to see new contributors!**
