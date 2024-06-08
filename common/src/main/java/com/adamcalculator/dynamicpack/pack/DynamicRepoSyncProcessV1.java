@@ -2,8 +2,8 @@ package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.InputValidator;
-import com.adamcalculator.dynamicpack.Mod;
-import com.adamcalculator.dynamicpack.PackUtil;
+import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
 import com.adamcalculator.dynamicpack.sync.state.StateFileDeleted;
 import com.adamcalculator.dynamicpack.util.*;
@@ -100,8 +100,8 @@ public class DynamicRepoSyncProcessV1 {
                 progress.downloading("<content:"+ id +">.json", it.getPercentage());
             }
         };
-        String content = compressSupported ? Urls.parseGZipContent(urlCompressed, Mod.GZIP_LIMIT, contentDownloadProgress) : Urls.parseContent(url, Mod.MOD_FILES_LIMIT, contentDownloadProgress);
-        String receivedHash = Hashes.calcHashForBytes(content.getBytes(StandardCharsets.UTF_8));
+        String content = compressSupported ? Urls.parseTextGZippedContent(urlCompressed, SharedConstrains.GZIP_LIMIT, contentDownloadProgress) : Urls.parseTextContent(url, SharedConstrains.MOD_FILES_LIMIT, contentDownloadProgress);
+        String receivedHash = Hashes.sha1sum(content.getBytes(StandardCharsets.UTF_8));
         if (!contentRemoteHash.equals(receivedHash)) {
             throw new SecurityException("Hash of content at " + url + " not verified. remote: " + contentRemoteHash + "; received: " + receivedHash);
         }
@@ -119,15 +119,15 @@ public class DynamicRepoSyncProcessV1 {
         String rem = c.optString("remote_parent", "");
         JSONObject files = c.getJSONObject("files");
 
-        InputValidator.validOrThrownPath(par);
-        InputValidator.validOrThrownPath(rem);
+        InputValidator.throwIsPathInvalid(par);
+        InputValidator.throwIsPathInvalid(rem);
 
         int processedFiles = 0;
         for (final String _relativePath : files.keySet()) {
             boolean pathValidated = false;
             try {
                 var path = getAndCheckPath(par, _relativePath); // parent / path.     assets/minecraft
-                InputValidator.validOrThrownPath(path);
+                InputValidator.throwIsPathInvalid(path);
                 pathValidated = true;
 
                 var filePath = packRootPath.resolve(path);
@@ -151,7 +151,7 @@ public class DynamicRepoSyncProcessV1 {
 
                 boolean isOverwrite = false;
                 if (Files.exists(filePath)) {
-                    String localHash = Hashes.nioCalcHashForPath(filePath);
+                    String localHash = Hashes.sha1sum(filePath);
                     if (!localHash.equals(hash)) {
                         isOverwrite = true;
                         this.progress.textLog(filePathForLogs + ": overwrite! hash not equal: local:" + localHash + " remote:" + hash);
@@ -168,7 +168,7 @@ public class DynamicRepoSyncProcessV1 {
 
                     markReloadRequired();
                     this.progress.textLog("Overwriting: " + filePathForLogs);
-                    Urls.downloadDynamicFile(fileRemoteUrl, filePath, hash, new FileDownloadConsumer() {
+                    PackUtil.downloadDynamicFile(fileRemoteUrl, filePath, hash, new FileDownloadConsumer() {
                         @Override
                         public void onUpdate(FileDownloadConsumer it) {
                             progress.downloading(filePath.getFileName().toString(), it.getPercentage());

@@ -12,12 +12,12 @@ public class SecurityTrustedUrlsTest {
     public void d() {
         Out.USE_SOUT = true;
 
-        Assertions.assertThrows(Exception.class, () -> Urls.parseContent("https://google.com", 1732132132));
-        Assertions.assertThrows(Exception.class, () -> Out.println(Urls.parseContent("https://modrinth.com", 6)));
+        Assertions.assertThrows(Exception.class, () -> Urls.parseTextContent("https://google.com", 1732132132));
+        Assertions.assertThrows(Exception.class, () -> Out.println(Urls.parseTextContent("https://modrinth.com", 6)));
 
-        Assertions.assertThrows(Exception.class, () -> Urls.parseContent("https://modrinth.com.google.com", 1732132132));
+        Assertions.assertThrows(Exception.class, () -> Urls.parseTextContent("https://modrinth.com.google.com", 1732132132));
 
-        Assertions.assertThrows(Exception.class, () -> Urls.parseContent("https://fakemodrinth.com.com", 1732132132));
+        Assertions.assertThrows(Exception.class, () -> Urls.parseTextContent("https://fakemodrinth.com.com", 1732132132));
 
 
         Assertions.assertDoesNotThrow(() -> {

@@ -1,6 +1,6 @@
 package com.adamcalculator.dynamicpack.util;
 
-import com.adamcalculator.dynamicpack.Mod;
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -58,7 +58,7 @@ public class Out {
     }
 
     public static void debug(String s) {
-        if (Mod.isDebugLogs()) {
+        if (SharedConstrains.isDebugLogs()) {
             println("DEBUG: " + s);
         }
     }
@@ -76,7 +76,7 @@ public class Out {
     }
 
     public static void init(Loader loader) {
-        if (loader == Loader.FABRIC && Mod.isRelease()) {
+        if (loader == Loader.FABRIC && SharedConstrains.isRelease()) {
             PREFIX = DEFAULT_PREFIX;
         }
     }

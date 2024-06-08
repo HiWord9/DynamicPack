@@ -2,10 +2,8 @@ package com.adamcalculator.dynamicpack;
 
 import com.adamcalculator.dynamicpack.pack.Pack;
 import com.adamcalculator.dynamicpack.pack.Remote;
-import com.adamcalculator.dynamicpack.util.AFiles;
-import com.adamcalculator.dynamicpack.util.FailedOpenPackFileSystemException;
-import com.adamcalculator.dynamicpack.util.Loader;
-import com.adamcalculator.dynamicpack.util.Out;
+import com.adamcalculator.dynamicpack.util.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -43,7 +41,7 @@ public abstract class DynamicPackMod {
 		this.loader = loader;
 
 		Out.init(loader);
-		Out.println("Mod version: " + Mod.VERSION_NAME + " build: " + Mod.VERSION_BUILD);
+		Out.println("Mod version: " + SharedConstrains.VERSION_NAME + " build: " + SharedConstrains.VERSION_BUILD);
 		this.gameDir = gameDir;
 		this.resourcePacks = new File(gameDir, "resourcepacks");
 		this.resourcePacks.mkdirs();
@@ -123,8 +121,9 @@ public abstract class DynamicPackMod {
 	 * @param host host to add.
 	 * @param requester any object. It is recommended that .toString explicitly give out your name.
 	 */
+	@ApiStatus.AvailableSince("1.0.30")
 	public static void addAllowedHosts(String host, Object requester) throws Exception {
-		Mod.addAllowedHosts(host, requester);
+		SharedConstrains.addAllowedHosts(host, requester);
 	}
 
 	public boolean isNameIsDynamic(String name) {

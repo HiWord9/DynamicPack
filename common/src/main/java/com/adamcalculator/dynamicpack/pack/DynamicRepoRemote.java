@@ -2,8 +2,8 @@ package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.InputValidator;
-import com.adamcalculator.dynamicpack.Mod;
-import com.adamcalculator.dynamicpack.PackUtil;
+import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
 import com.adamcalculator.dynamicpack.util.AFiles;
 import com.adamcalculator.dynamicpack.util.FileDownloadConsumer;
@@ -72,7 +72,7 @@ public class DynamicRepoRemote extends Remote {
 
     @Override
     public boolean checkUpdateAvailable() throws IOException {
-        String content = Urls.parseContent(buildUrl, 64).trim();
+        String content = Urls.parseTextContent(buildUrl, 64).trim();
         return getCurrentBuild() != Long.parseLong(content);
     }
 
@@ -152,12 +152,13 @@ public class DynamicRepoRemote extends Remote {
             }
         };
         if (skipSign) {
-            packUrlContent = Urls.parseContent(packUrl, Mod.MOD_FILES_LIMIT, parseProgress);
+            packUrlContent = Urls.parseTextContent(packUrl, SharedConstrains.MOD_FILES_LIMIT, parseProgress);
             Out.warn("Dynamic pack " + parent.getName() + " is skipping signing.");
             progress.textLog("File parsed, verify skipped.");
 
         } else {
-            packUrlContent = Urls.parseContentAndVerify(packSigUrl, packUrl, publicKey, Mod.MOD_FILES_LIMIT, parseProgress);
+            // TODO: fix it
+            packUrlContent = Urls.parseTextContent(packUrl, SharedConstrains.MOD_FILES_LIMIT, parseProgress);
             progress.textLog("Success parse and verify file.");
         }
 
@@ -168,8 +169,8 @@ public class DynamicRepoRemote extends Remote {
         }
 
         long minBuildForWork;
-        if ((minBuildForWork = repoJson.optLong("minimal_mod_build", Mod.VERSION_BUILD)) > Mod.VERSION_BUILD) {
-            throw new RuntimeException("Incompatible DynamicPack Mod version for this pack: required minimal_mod_build=" + minBuildForWork + ", but currently mod build is " + Mod.VERSION_BUILD);
+        if ((minBuildForWork = repoJson.optLong("minimal_mod_build", SharedConstrains.VERSION_BUILD)) > SharedConstrains.VERSION_BUILD) {
+            throw new RuntimeException("Incompatible DynamicPack Mod version for this pack: required minimal_mod_build=" + minBuildForWork + ", but currently mod build is " + SharedConstrains.VERSION_BUILD);
         }
 
         String remoteName = repoJson.getString("name");

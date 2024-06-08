@@ -1,7 +1,7 @@
 package com.adamcalculator.dynamicpack.status;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.Mod;
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.util.Loader;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.Urls;
@@ -18,13 +18,13 @@ public class StatusChecker {
 
     public static void check() throws Exception {
         Out.println("Checking status...");
-        String s = Urls.parseContent(URL, 1024 * 1024 * 128);
+        String s = Urls.parseTextContent(URL, 1024 * 1024 * 128);
         JSONObject j = new JSONObject(s);
         String platformKey;
         JSONObject lat = j.getJSONObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));
-        isUpdateAvailable = lat.getLong("build") > Mod.VERSION_BUILD;
-        isSafe = lat.getLong("safe") <= Mod.VERSION_BUILD;
-        isFormatActual = lat.getLong("format") <= Mod.VERSION_BUILD;
+        isUpdateAvailable = lat.getLong("build") > SharedConstrains.VERSION_BUILD;
+        isSafe = lat.getLong("safe") <= SharedConstrains.VERSION_BUILD;
+        isFormatActual = lat.getLong("format") <= SharedConstrains.VERSION_BUILD;
 
         isChecked = true;
         Out.println(String.format("Status checked! platformKey=%s, isSafe=%s, isFormatActual=%s, isUpdateAvailable=%s", platformKey, isSafe, isFormatActual, isUpdateAvailable));

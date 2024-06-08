@@ -7,12 +7,14 @@ import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 
-public class Mod {
-    public static final long VERSION_BUILD = 30;
-    public static final String VERSION_NAME_MOD = "1.0.30";
+public class SharedConstrains {
 
+
+    public static final boolean DEBUG = true; // Don't forget to disable in release
+    public static final long VERSION_BUILD = 31;
+    public static final String VERSION_NAME_MOD = "1.0.31";
     public static final String VERSION_NAME_BRANCH = "mc1.20";
-    public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH;
+    public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH + (DEBUG ? "-debug" : "");
     public static final String MOD_ID = "dynamicpack";
 
 
@@ -23,6 +25,7 @@ public class Mod {
     public static final long GZIP_LIMIT = megabyte(50); // 50 MB of .gz file
     public static final long MOD_FILES_LIMIT = megabyte(8);
     public static final String MODRINTH_URL = "https://modrinth.com/mod/dynamicpack";
+    public static int URLS_BUFFER_SIZE = 1024; // TODO: Add to config...
 
     private static final Set<String> ALLOWED_HOSTS = new HashSet<>();
     static {
@@ -66,43 +69,44 @@ public class Mod {
             String host = uri.getHost();
             for (String allowedHost : ALLOWED_HOSTS) {
                 if (host.equals(allowedHost)) {
-                    Out.println("Check trusted(true): " + host);
+                    Out.debug("Check trusted(true): " + host);
                     return true;
                 }
                 if (host.endsWith("." + allowedHost)) {
-                    Out.println("Check trusted(true): " + host);
+                    Out.debug("Check trusted(true): " + host);
                     return true;
                 }
             }
             Out.println("Check trusted(false): " + host);
             return false;
+
         } catch (Exception e) {
-            throw new IOException("Error", e);
+            throw new IOException("Error while check url for trust", e);
         }
+    }
+
+    public static long megabyte(long mb) {
+        return 1024L * 1024L * mb;
     }
 
     public static boolean isBlockAllNotTrustedNetworks() {
         return true;
     }
 
-    private static long megabyte(long mb) {
-        return 1024L * 1024L * mb;
-    }
-
     // TRUE FOR ALL PUBLIC VERSION!!!!!!
     // false is equal not safe!1!!! RELEASE=true
     public static boolean isRelease() {
-        return true;
+        return !DEBUG;
     }
 
     // localhost allowed RELEASE=false
     private static boolean isLocalHostAllowed() {
-        return false;
+        return DEBUG;
     }
 
     // file_debug_only:// allowed RELEASE=false
     public static boolean isFileDebugSchemeAllowed() {
-        return false;
+        return DEBUG;
     }
 
     // http:// allowed RELEASE=false
@@ -112,11 +116,12 @@ public class Mod {
 
     // DebugScreen allowed
     public static boolean isDebugScreenAllowed() {
-        return false;
+        return DEBUG;
     }
 
-    public static void debugNetwork() {
+    public static void debugNetwork(int bytesRead, long total) {
         if (isRelease()) return;
+        if (true) return;
 
         try {
             Thread.sleep(200);
@@ -126,10 +131,10 @@ public class Mod {
     }
 
     public static boolean isDebugLogs() {
-        return false;
+        return DEBUG;
     }
 
     public static boolean isDebugMessageOnWorldJoin() {
-        return false;
+        return DEBUG;
     }
 }

@@ -4,28 +4,20 @@ plugins {
     id 'maven-publish'
     id 'fabric-loom' version '1.4-SNAPSHOT'
 }
+
+
 base {
     archivesName = "${mod_name}-fabric-${minecraft_version}"
 }
-dependencies {
-    // https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
-    include 'org.bouncycastle:bcpg-jdk18on:1.77'
-    include "org.bouncycastle:bcprov-ext-jdk18on:1.77"
-    include 'org.json:json:20231013'
-    include "net.lingala.zip4j:zip4j:2.11.5"
 
-    implementation("org.bouncycastle:bcpg-jdk18on:1.77")
-    implementation("org.bouncycastle:bcprov-ext-jdk18on:1.77") // so larger for mod... 8 MB
+
+dependencies {
+    include 'org.json:json:20231013'
     implementation("org.json:json:20231013")
 
-    implementation("commons-codec:commons-codec:1.15")
+    include "net.lingala.zip4j:zip4j:2.11.5"
     implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("org.apache.commons:commons-compress:1.24.0")
-    implementation("commons-io:commons-io:2.11.0")
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
+
 
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
@@ -43,6 +35,7 @@ loom {
     mixin {
         defaultRefmapName.set("${mod_id}.refmap.json")
     }
+
     runs {
         client {
             client()

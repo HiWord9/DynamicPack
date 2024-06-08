@@ -1,7 +1,7 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.Mod;
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.pack.Pack;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.adamcalculator.dynamicpack.sync.SyncThread;
@@ -23,6 +23,18 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.server.packs.metadata.pack.PackMetadataSectionSerializer;
 import net.minecraft.util.GsonHelper;
 
+
+/**
+ * Base impl for DynamicPack mod (minecraft logic)
+ * <pre>
+ * == inheritance tree ==
+ * DynamicPackMod - mod-related logic
+ * | DynamicPackModBase - minecraft-related logic
+ * . | fabric impl...
+ * . | forge impl...
+ * . | ...
+ * </pre>
+ */
 public abstract class DynamicPackModBase extends DynamicPackMod {
     private SystemToast toast = null;
     private long toastUpdated = 0;
@@ -41,31 +53,37 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
         toastUpdated = System.currentTimeMillis();
     }
 
-    public void onWorldJoinForUpdateChecks(LocalPlayer player) {
-        if (Mod.isDebugMessageOnWorldJoin()) {
-            player.sendSystemMessage(Component.literal("Debug message on world join").withStyle(ChatFormatting.GREEN));
-        }
-        Component download = Component.translatable("dynamicpack.status_checker.download")
+    private Component createDownloadComponent() {
+        return Component.translatable("dynamicpack.status_checker.download")
                 .withStyle(Style.EMPTY
-                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("dynamicpack.status_checker.download.hover", Component.literal(com.adamcalculator.dynamicpack.Mod.MODRINTH_URL).withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA))))
-                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, com.adamcalculator.dynamicpack.Mod.MODRINTH_URL))
+                        .withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable("dynamicpack.status_checker.download.hover",
+                                Component.literal(SharedConstrains.MODRINTH_URL).withStyle(ChatFormatting.UNDERLINE, ChatFormatting.AQUA))))
+                        .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, SharedConstrains.MODRINTH_URL))
                 )
                 .withStyle(ChatFormatting.YELLOW, ChatFormatting.UNDERLINE);
+    }
+
+    public void onWorldJoinForUpdateChecks(LocalPlayer player) {
+        if (SharedConstrains.isDebugMessageOnWorldJoin()) {
+            player.sendSystemMessage(Component.literal("Debug message on world join").withStyle(ChatFormatting.GREEN));
+        }
+
+
 
 
         if (player == null) {
             Out.warn("player == null on world join");
 
         } else if (!StatusChecker.isSafe()) {
-            player.sendSystemMessage(Component.translatable("dynamicpack.status_checker.not_safe", download));
+            player.sendSystemMessage(Component.translatable("dynamicpack.status_checker.not_safe", createDownloadComponent()));
             setToastContent(Component.translatable("dynamicpack.status_checker.not_safe.toast.title"),
                     Component.translatable("dynamicpack.status_checker.not_safe.toast.description"));
 
         } else if (!StatusChecker.isFormatActual()) {
-            player.sendSystemMessage(Component.translatable("dynamicpack.status_checker.format_not_actual", download));
+            player.sendSystemMessage(Component.translatable("dynamicpack.status_checker.format_not_actual", createDownloadComponent()));
 
         } else if (StatusChecker.isModUpdateAvailable()) {
-            Out.println("DynamicPack mod update available: " + com.adamcalculator.dynamicpack.Mod.MODRINTH_URL);
+            Out.println("DynamicPack mod update available: " + SharedConstrains.MODRINTH_URL);
 
         } else if (!StatusChecker.isChecked()) {
             Out.warn("StatusChecker isChecked = false :(");

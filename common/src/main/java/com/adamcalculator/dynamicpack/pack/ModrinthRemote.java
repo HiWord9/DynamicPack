@@ -1,8 +1,8 @@
 package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.Mod;
-import com.adamcalculator.dynamicpack.PackUtil;
+import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
 import com.adamcalculator.dynamicpack.util.*;
 import org.json.JSONArray;
@@ -60,7 +60,7 @@ public class ModrinthRemote extends Remote {
     }
 
     public JSONObject parseLatestVersionJson() throws IOException {
-        String content = Urls.parseContent(getVersionsUrl(), Mod.MOD_MODTINTH_API_LIMIT);
+        String content = Urls.parseTextContent(getVersionsUrl(), SharedConstrains.MOD_MODTINTH_API_LIMIT);
         JSONArray j = new JSONArray(content);
         for (Object o : j) {
             JSONObject jsonObject = (JSONObject) o;
@@ -117,7 +117,7 @@ public class ModrinthRemote extends Remote {
         File tempFile = null;
         int attempts = 3;
         while (attempts > 0) {
-            tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_download", ".zip", Mod.MODRINTH_HTTPS_FILE_SIZE_LIMIT, new FileDownloadConsumer(){
+            tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_download", ".zip", SharedConstrains.MODRINTH_HTTPS_FILE_SIZE_LIMIT, new FileDownloadConsumer() {
                 @Override
                 public void onUpdate(FileDownloadConsumer it) {
                     float percentage = it.getPercentage();
@@ -125,7 +125,7 @@ public class ModrinthRemote extends Remote {
                 }
             });
 
-            if (Hashes.calcHashForFile(tempFile).equals(latest.fileHash)) {
+            if (Hashes.sha1sum(tempFile).equals(latest.fileHash)) {
                 progress.textLog("Download done! Hashes is equals.");
                 break;
             }

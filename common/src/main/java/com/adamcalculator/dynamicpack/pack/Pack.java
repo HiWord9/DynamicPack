@@ -1,7 +1,7 @@
 package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.PackUtil;
+import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
 import com.adamcalculator.dynamicpack.util.AFiles;

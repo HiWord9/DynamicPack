@@ -32,46 +32,66 @@ public class InputValidatorTest {
     }
 
     @Test
+    public void testUrls() {
+        Assertions.assertTrue(InputValidator.isUrlValid("https://google.com"));
+        Assertions.assertTrue(InputValidator.isUrlValid("https://324234.github.io/"));
+        Assertions.assertTrue(InputValidator.isUrlValid("https://google.com/f"));
+        Assertions.assertTrue(InputValidator.isUrlValid("https://google.net/fi/1/%s_1234567890-+.json?x=81723731+343+1"));
+        Assertions.assertFalse(InputValidator.isUrlValid("https://google.com`"));
+        Assertions.assertFalse(InputValidator.isUrlValid("https://google.com "));
+        Assertions.assertFalse(InputValidator.isUrlValid("https://google.com /"));
+        Assertions.assertFalse(InputValidator.isUrlValid("https://google.com*!@#$%^&*()"));
+    }
+
+    @Test
     public void testPaths() {
-        InputValidator.validOrThrownPath("");
-        InputValidator.validOrThrownPath(" ");
-        InputValidator.validOrThrownPath("/file/p.txt");
+
+        InputValidator.throwIsPathInvalid("/file/p.txt");
 
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("!/file/p.txt");
+            InputValidator.throwIsPathInvalid("");
         });
 
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath(null);
+            InputValidator.throwIsPathInvalid(" ");
+        });
+
+
+        Assertions.assertThrows(SecurityException.class, () -> {
+            InputValidator.throwIsPathInvalid("!/file/p.txt");
+        });
+
+        Assertions.assertThrows(SecurityException.class, () -> {
+            InputValidator.throwIsPathInvalid(null);
         });
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("$@#");
+            InputValidator.throwIsPathInvalid("$@#");
         });
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("!\"/file/p.txt");
+            InputValidator.throwIsPathInvalid("!\"/file/p.txt");
         });        Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("!/fil*&^%544e/p.txt");
+            InputValidator.throwIsPathInvalid("!/fil*&^%544e/p.txt");
         });
         Assertions.assertThrows(SecurityException.class, () -> {
             byte[] b = new byte[128];
             new Random().nextBytes(b);
-            InputValidator.validOrThrownPath(new String(b));
+            InputValidator.throwIsPathInvalid(new String(b));
         });
 
 
         try {
             byte[] b = new byte[128];
             new Random().nextBytes(b);
-            InputValidator.validOrThrownPath(new String(b));
+            InputValidator.throwIsPathInvalid(new String(b));
         } catch (Exception e) {
             System.out.println(e);
         }
 
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("~");
+            InputValidator.throwIsPathInvalid("~");
         });
         Assertions.assertThrows(SecurityException.class, () -> {
-            InputValidator.validOrThrownPath("()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)");
+            InputValidator.throwIsPathInvalid("()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)()*)*&YYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYYY)");
         });
 
     }

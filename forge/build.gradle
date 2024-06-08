@@ -4,9 +4,13 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
 }
+
+
 base {
     archivesName = "${mod_name}-forge-${minecraft_version}"
 }
+
+
 mixin {
     add(sourceSets.main, "${mod_id}.refmap.json")
 
@@ -77,34 +81,17 @@ minecraft {
 sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
-
-
-    implementation("org.bouncycastle:bcpg-jdk18on:1.77")
-    implementation("org.bouncycastle:bcprov-ext-jdk18on:1.77") // so larger for mod... 8 MB
+    // Forge not working... If you may fix forge, I'll hug you
     implementation("org.json:json:20231013")
-
-    implementation("commons-codec:commons-codec:1.15")
     implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("org.apache.commons:commons-compress:1.24.0")
-    implementation("commons-io:commons-io:2.11.0")
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
-    implementation("org.slf4j:slf4j-api:2.0.1")
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
-
 
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(":common")
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 
-    // https://mvnrepository.com/artifact/org.bouncycastle/bcpg-jdk18on
-    minecraftEmbed 'org.bouncycastle:bcpg-jdk18on:[1.77]'
-    minecraftEmbed "org.bouncycastle:bcprov-jdk18on:[1.77]"
     minecraftEmbed 'org.json:json:[20231013]'
     minecraftEmbed "net.lingala.zip4j:zip4j:[2.11.5]"
 
-    minecraftLibrary 'org.bouncycastle:bcpg-jdk18on:[1.77]'
-    minecraftLibrary "org.bouncycastle:bcprov-jdk18on:[1.77]"
     minecraftLibrary 'org.json:json:[20231013]'
     minecraftLibrary "net.lingala.zip4j:zip4j:[2.11.5]"
 }

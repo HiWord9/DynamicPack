@@ -1,6 +1,6 @@
 package tests;
 
-import com.adamcalculator.dynamicpack.PackUtil;
+import com.adamcalculator.dynamicpack.util.PackUtil;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;

@@ -1,6 +1,6 @@
-package com.adamcalculator.dynamicpack;
+package com.adamcalculator.dynamicpack.util;
 
-import com.adamcalculator.dynamicpack.util.FailedOpenPackFileSystemException;
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import org.json.JSONObject;
 
 import java.io.File;
@@ -17,6 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.LongConsumer;
 import java.util.stream.Stream;
 
 public class PackUtil {
@@ -84,5 +85,34 @@ public class PackUtil {
             return !Files.isDirectory(path);
         }
         return false;
+    }
+
+    public static void downloadDynamicFile(String url, Path path, String hash, LongConsumer progress) throws IOException {
+        final int maxI = 3;
+        int i = maxI;
+        while (i > 0) {
+            try {
+                Path parent = path.getParent();
+                if (parent != null && !Files.exists(parent)) {
+                    Files.createDirectories(path);
+                }
+
+                if (Files.exists(path)) {
+                    Files.delete(path);
+                }
+                Files.createFile(path);
+
+                try {
+                    Urls._transferStreamsWithHash(hash, Urls._getInputStreamOfUrl(url, SharedConstrains.DYNAMIC_PACK_HTTPS_FILE_SIZE_LIMIT, progress), Files.newOutputStream(path), progress);
+                } catch (Exception e) {
+                    throw new RuntimeException("File " + path + " download error. From url: " + url + ". Expected hash: " + hash, e);
+                }
+                break;
+            } catch (Exception e) {
+                Out.error("downloadDynamicFile. Attempt=" + (maxI - i + 1) + "/" + maxI, e);
+            }
+
+            i--;
+        }
     }
 }

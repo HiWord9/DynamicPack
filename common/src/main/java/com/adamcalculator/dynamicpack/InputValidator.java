@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 public class InputValidator {
     private static final Pattern CONTENT_ID_PATTERN = Pattern.compile("^[a-z0-9_:-]{2,128}$");
     private static final Pattern PATH_PATTERN = Pattern.compile("^[A-Za-z0-9_./() +-]{0,255}$");
+    private static final Pattern URL_PATTERN = Pattern.compile("[(http(s)?):\\/\\/(www\\.)?a-zA-Z0-9@:%._\\+~#=]{2,256}\\.[a-z]{2,6}\\b([-a-zA-Z0-9@:%_\\+.~#?&//=]*)");
 
     public static boolean isContentIdValid(String input) {
         if (input == null) {
@@ -36,12 +37,27 @@ public class InputValidator {
         return hash != null && hash.length() == 40 && !hash.contains(" ");
     }
 
-    public static void validOrThrownPath(String par) {
+    public static void throwIsPathInvalid(String par) {
         if (par == null) {
             throw new SecurityException("null", new NullPointerException("path to valid is null"));
         }
-        if (!PATH_PATTERN.matcher(par).matches()) {
+
+        String trim = par.trim();
+        if (trim.length() < 2 || !PATH_PATTERN.matcher(par).matches()) {
             throw new SecurityException("Not valid path: " + new String(par.getBytes(StandardCharsets.US_ASCII), StandardCharsets.US_ASCII));
         }
+    }
+
+    public static void throwIsUrlInvalid(String url) {
+        if (url == null) {
+            throw new SecurityException("null", new NullPointerException("url to valid is null"));
+        }
+        if (!isUrlValid(url)) {
+            throw new SecurityException("Not valid url: " + new String(url.getBytes(StandardCharsets.US_ASCII), StandardCharsets.US_ASCII));
+        }
+    }
+
+    public static boolean isUrlValid(String url) {
+        return URL_PATTERN.matcher(url).matches();
     }
 }
