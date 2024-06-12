@@ -5,10 +5,6 @@ public enum OverrideType {
     FALSE,
     NOT_SET;
 
-    public static OverrideType ofBoolean(boolean b) {
-        return b ? TRUE : FALSE;
-    }
-
     public OverrideType next() {
         return switch (this) {
             case TRUE -> FALSE;
@@ -17,7 +13,14 @@ public enum OverrideType {
         };
     }
 
+    public static OverrideType ofBoolean(boolean b) {
+        return b ? TRUE : FALSE;
+    }
+
     public boolean asBoolean() {
+        if (this == NOT_SET) {
+            throw new UnsupportedOperationException("asBoolean() don't support for NOT_SET");
+        }
         return this == TRUE;
     }
 }

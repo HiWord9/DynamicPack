@@ -129,7 +129,7 @@ public class DynamicRepoRemote extends Remote {
 
             String name = repoContent.optString("name", null);
             if (name != null) {
-                if (InputValidator.isContentNameValid(name)) {
+                if (InputValidator.isDynamicContentNameValid(name)) {
                     cacheJson.put("name", name);
                 } else {
                     Out.println("Name of content '" + id + "' not valid.");

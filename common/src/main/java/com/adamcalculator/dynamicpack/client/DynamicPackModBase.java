@@ -78,8 +78,9 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
 
         } else if (!StatusChecker.isChecked()) {
             Out.warn("StatusChecker isChecked = false :(");
+
         } else {
-            Out.println("Mod in actual state in current date!");
+            Out.println("Mod in actual state in current time!");
         }
     }
 
@@ -88,6 +89,7 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
         Thread thread = new Thread(() -> {
 //            createSyncTask(true).run();
             Out.println("Haha debug!");
+            // TODO here you break.. may sync is only clicked pack?
         });
         thread.setName("DynamicPack-ManuallySyncThread" + (DynamicPackMod.manuallySyncThreadCounter++));
         thread.start();

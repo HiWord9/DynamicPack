@@ -24,11 +24,18 @@ public abstract class DynamicPackMod {
 	private Loader loader = Loader.UNKNOWN;
 	private File gameDir;
 	private File resourcePacks;
+	private File configDir;
+	private File configFile;
+	private Config config;
 	private PacksContainer packsContainer;
 	private GameStartSyncing gameStartSyncing;
 
+	public DynamicPackMod() {
+	}
+
 	private boolean minecraftInitialized = false;
 	protected static int manuallySyncThreadCounter = 0;
+
 
 	public void init(File gameDir, Loader loader) {
 		if (INSTANCE != null) {
@@ -39,15 +46,19 @@ public abstract class DynamicPackMod {
 		this.loader = loader;
 		this.resourcePacks = new File(gameDir, "resourcepacks");
 		this.resourcePacks.mkdirs();
+		this.configDir = new File(gameDir, "config/dynamicpack");
+		this.configDir.mkdirs();
+		this.configFile = new File(configDir, "config.json");
 
-		this.packsContainer = new PacksContainer();
-		this.gameStartSyncing = new GameStartSyncing();
+		// load config before logic and after files paths sets
+		config = Config.load();
 
+		Remote.initRemoteTypes();
 		Out.init(loader);
 		Out.println("Mod version: " + SharedConstrains.VERSION_NAME + " build: " + SharedConstrains.VERSION_BUILD);
-		Remote.initRemoteTypes();
-
-		gameStartSyncing.start();
+		this.packsContainer = new PacksContainer();
+		this.gameStartSyncing = new GameStartSyncing();
+		this.gameStartSyncing.start();
 	}
 	
 	
@@ -115,8 +126,8 @@ public abstract class DynamicPackMod {
 		return INSTANCE.packsContainer.getPacks();
 	}
 
-	public PacksContainer getPacksContainer() {
-		return packsContainer;
+	public static PacksContainer getPacksContainer() {
+		return INSTANCE.packsContainer;
 	}
 
 	public static Loader getLoader() {
@@ -147,7 +158,20 @@ public abstract class DynamicPackMod {
 		}
 	}
 
-	public GameStartSyncing getGameStartSyncing() {
-		return gameStartSyncing;
+	public static GameStartSyncing getGameStartSyncing() {
+		return INSTANCE.gameStartSyncing;
 	}
+
+	public static File getConfigDir() {
+		return INSTANCE.configDir;
+	}
+
+	public static File getConfigFile() {
+		return INSTANCE.configFile;
+	}
+
+	public static Config getConfig() {
+		return INSTANCE.config;
+	}
+
 }

@@ -203,10 +203,10 @@ public class DynamicResourcePack extends AbstractPack {
     private void validateSafePackMinecraftMeta() throws Exception {
         PackUtil.openPackFileSystem(location, path -> {
             Path mcmeta = path.resolve(SharedConstrains.MINECRAFT_META);
-            boolean safe = PackUtil.isPathFileExists(mcmeta);
+            boolean safe = PathsUtil.isPathFileExists(mcmeta);
             if (safe) {
                 try {
-                    safe = checkMinecraftMetaIsValid(PackUtil.readString(mcmeta));
+                    safe = checkMinecraftMetaIsValid(PathsUtil.readString(mcmeta));
                 } catch (IOException ignored) {
                     safe = false;
                 }

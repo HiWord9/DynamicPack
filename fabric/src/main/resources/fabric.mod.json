@@ -18,6 +18,9 @@
     "entrypoints": {
         "preLaunch": [
           "com.adamcalculator.dynamicpack.client.fabric.FabricDynamicPreLaunch"
+        ],
+        "modmenu": [
+            "com.adamcalculator.dynamicpack.client.fabric.ModMenuIntegration"
         ]
     },
     "accessWidener": "dynamicpack.accesswidener",

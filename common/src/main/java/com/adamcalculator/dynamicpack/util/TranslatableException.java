@@ -2,6 +2,9 @@ package com.adamcalculator.dynamicpack.util;
 
 import net.minecraft.network.chat.Component;
 
+/**
+ * Exception shows in GUI as translatable
+ */
 public class TranslatableException extends RuntimeException {
     private final String key;
     private final Object[] args;

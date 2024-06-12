@@ -15,8 +15,11 @@ dependencies {
     include 'org.json:json:20231013'
     implementation("org.json:json:20231013")
 
+
     include "net.lingala.zip4j:zip4j:2.11.5"
     implementation("net.lingala.zip4j:zip4j:2.11.5")
+
+    modImplementation "com.terraformersmc:modmenu:9.0.0"
 
 
     minecraft "com.mojang:minecraft:${minecraft_version}"

@@ -4,7 +4,9 @@ import com.adamcalculator.dynamicpack.SharedConstrains;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-
+/**
+ * Mod logger
+ */
 public class Out {
     public static final Logger LOGGER = LogManager.getLogger("dynamicpack");
     private static final String DEFAULT_PREFIX = "[DynamicPack] ";

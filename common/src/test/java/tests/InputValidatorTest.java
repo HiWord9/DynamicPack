@@ -10,25 +10,25 @@ public class InputValidatorTest {
 
     @Test
     public void testContentId() {
-        Assertions.assertFalse(InputValidator.isContentIdValid(""));
-        Assertions.assertFalse(InputValidator.isContentIdValid(" "));
-        Assertions.assertFalse(InputValidator.isContentIdValid("  "));
-        Assertions.assertFalse(InputValidator.isContentIdValid("   32"));
-        Assertions.assertFalse(InputValidator.isContentIdValid("test\ntest"));
+        Assertions.assertFalse(InputValidator.isDynamicContentIdValid(""));
+        Assertions.assertFalse(InputValidator.isDynamicContentIdValid(" "));
+        Assertions.assertFalse(InputValidator.isDynamicContentIdValid("  "));
+        Assertions.assertFalse(InputValidator.isDynamicContentIdValid("   32"));
+        Assertions.assertFalse(InputValidator.isDynamicContentIdValid("test\ntest"));
 
-        Assertions.assertTrue(InputValidator.isContentIdValid("__"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("_-"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("pack:megapack"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("1234567890"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("01"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("test_pack"));
-        Assertions.assertTrue(InputValidator.isContentIdValid("super:mega_puper:"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("__"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("_-"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("pack:megapack"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("1234567890"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("01"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("test_pack"));
+        Assertions.assertTrue(InputValidator.isDynamicContentIdValid("super:mega_puper:"));
     }
 
     @Test
     public void testRemoteName() {
-        Assertions.assertFalse(InputValidator.isPackNameValid("\n"));
-        Assertions.assertTrue(InputValidator.isPackNameValid("__"));
+        Assertions.assertFalse(InputValidator.isDynamicPackNameValid("\n"));
+        Assertions.assertTrue(InputValidator.isDynamicPackNameValid("__"));
     }
 
     @Test

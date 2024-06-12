@@ -5,7 +5,6 @@ import com.adamcalculator.dynamicpack.util.FailedOpenPackFileSystemException;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.util.PathsUtil;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -24,7 +23,10 @@ public class PacksContainer {
 
     /**
      * Currently dynamic packs
-     * Pack.zip: PackObject
+     * <pre>
+     * *key* : *value*
+     * "ExamplePack.zip" : DynamicResourcePack
+     * </pre>
      */
     private final HashMap<String, DynamicResourcePack> packs = new HashMap<>();
 
@@ -44,19 +46,22 @@ public class PacksContainer {
             Out.warn("Already in scanning!");
             return;
         }
+
         if (rescanPacksBlocked) {
-            Out.warn("rescan blocked! maybe currently syncing");
+            Out.warn("Rescan blocked! maybe currently syncing");
             return;
         }
+
         isPacksScanning = true;
         List<String> forDelete = new ArrayList<>(packs.keySet());
         for (File packFile : PathsUtil.listFiles(resourcePacks)) {
             try {
-                PackUtil.openPackFileSystem(packFile, path -> {
-                    Path clientFile = path.resolve(SharedConstrains.CLIENT_FILE);
+                PackUtil.openPackFileSystem(packFile, packPath -> {
+                    Path clientFile = packPath.resolve(SharedConstrains.CLIENT_FILE);
+
                     if (Files.exists(clientFile)) {
                         Out.println("+ Pack " + packFile.getName() + " supported by mod!");
-                        processPack(packFile, PackUtil.readJson(clientFile));
+                        processPack(packFile, clientFile);
                         forDelete.remove(packFile.getName());
 
                     } else {
@@ -79,13 +84,12 @@ public class PacksContainer {
         isPacksScanning = false;
     }
 
-
-
-    private void processPack(File location, JSONObject json) {
+    private void processPack(File location, Path clientFile) throws Exception {
+        var json = PathsUtil.readJson(clientFile);
         long formatVersion = json.getLong("formatVersion");
         DynamicResourcePack oldestPack = packs.getOrDefault(location.getName(), null);
         if (formatVersion == 1) {
-            DynamicResourcePack pack = new DynamicResourcePack(location, json);
+            var pack = new DynamicResourcePack(location, json);
             if (oldestPack != null) {
                 pack.flashback(oldestPack);
             }

@@ -12,6 +12,10 @@ import java.nio.file.Files;
 import java.util.function.LongConsumer;
 import java.util.zip.GZIPInputStream;
 
+
+/**
+ * Safe network utils
+ */
 public class Urls {
     public static boolean isFileDebugSchemeAllowed() {
         return SharedConstrains.isFileDebugSchemeAllowed();

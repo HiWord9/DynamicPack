@@ -10,6 +10,9 @@ public abstract class SyncBuilder {
      */
     public abstract void init() throws Exception;
 
+    /**
+     * @return downloaded size
+     */
     public abstract long getDownloadedSize();
 
     /**

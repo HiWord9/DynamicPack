@@ -11,7 +11,6 @@ import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,8 +20,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
-
-import static com.adamcalculator.dynamicpack.util.NetworkStat.speedMultiplier;
 
 public class DynamicRepoSyncBuilder extends SyncBuilder {
     private static ExecutorService executor;
@@ -63,7 +60,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
             }
 
             String remoteName = repoJson.getString("name");
-            if (!InputValidator.isPackNameValid(remoteName)) {
+            if (!InputValidator.isDynamicPackNameValid(remoteName)) {
                 throw new RuntimeException("Remote name of pack not valid.");
             }
 
@@ -82,7 +79,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     public boolean doUpdate(SyncProgress progress) throws Exception {
         progress.setPhase("Opening a pack file-system");
         PackUtil.openPackFileSystem(pack.getLocation(), packFileSystem -> {
-            PackUtil.walkScan(oldestFilesList, packFileSystem);
+            PathsUtil.walkScan(oldestFilesList, packFileSystem);
 
 
             internalProcessDynamicFiles(progress, packFileSystem);
@@ -127,7 +124,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     private void processContentInit(JSONObject jsonContentD1) throws Exception {
         // dynamicmcpack.repo.json["contents"][*jsonContent*]
         var id = jsonContentD1.getString("id");
-        InputValidator.checkContentIdValid(id);
+        InputValidator.throwIsContentIdInvalid(id);
         var url = jsonContentD1.getString("url");
         var urlCompressed = jsonContentD1.optString("url_compressed", null);
         boolean compressSupported = urlCompressed != null;
@@ -336,7 +333,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         while (i < contents.length()) {
             var content = contents.getJSONObject(i);
             var id = content.getString("id");
-            InputValidator.checkContentIdValid(id);
+            InputValidator.throwIsContentIdInvalid(id);
             var defaultActive = content.optBoolean("default_active", true);
 
             // is active in settings or required

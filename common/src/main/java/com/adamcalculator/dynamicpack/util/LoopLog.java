@@ -1,5 +1,8 @@
 package com.adamcalculator.dynamicpack.util;
 
+/**
+ * Millis timer
+ */
 public class LoopLog {
     private long latest;
     private final int interval;

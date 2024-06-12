@@ -3,13 +3,17 @@ package com.adamcalculator.dynamicpack.util;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.UnzipParameters;
 import org.apache.commons.io.FileUtils;
+import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.Set;
 import java.util.stream.Stream;
 
 public class PathsUtil {
@@ -128,4 +132,61 @@ public class PathsUtil {
         }
     }
 
+
+    /**
+     * If paths parent not exists, create dirs to file
+     */
+    public static void createDirsToFile(Path path) throws IOException {
+        Path parent = path.getParent();
+        if (parent != null && !Files.exists(parent)) {
+            Files.createDirectories(path);
+        }
+    }
+
+    /**
+     * Fill buffer with paths to all files (recursively) in path. adding only paths to files. Directories not adding here
+     * <pre>
+     *  Example buffer content:
+     *  * /file.txt
+     *  * /folder/texture.png
+     *  * /folder/sound.ogg
+     *  * /directory/huge.mp4
+     * </pre>
+     */
+    public static void walkScan(Set<String> buffer, Path path) {
+        try (Stream<Path> entries = Files.walk(path, Integer.MAX_VALUE)) {
+            entries.forEach(path1 -> {
+                if (!Files.isDirectory(path1)) {
+                    buffer.add(path1.toString());
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Exception while walkScan", e);
+        }
+    }
+
+    // if path exist and isFile
+    public static boolean isPathFileExists(Path path) {
+        if (Files.exists(path)) {
+            return !Files.isDirectory(path);
+        }
+        return false;
+    }
+
+    public static JSONObject readJson(InputStream inputStream) throws IOException {
+        return new JSONObject(readString(inputStream));
+    }
+
+    public static String readString(InputStream inputStream) throws IOException {
+        byte[] bytes = inputStream.readAllBytes();
+        return new String(bytes, StandardCharsets.UTF_8);
+    }
+
+    public static JSONObject readJson(Path path) throws IOException {
+        return new JSONObject(readString(path));
+    }
+
+    public static String readString(Path path) throws IOException {
+        return Files.readString(path, StandardCharsets.UTF_8);
+    }
 }

@@ -50,7 +50,7 @@ public class SharedConstrains {
         ALLOWED_HOSTS.add("modrinth.com");
         ALLOWED_HOSTS.add("github.com");
         ALLOWED_HOSTS.add("github.io");
-        ALLOWED_HOSTS.add("githubusercontent.com"); // use github pages instead of this
+        ALLOWED_HOSTS.add("githubusercontent.com"); // use GitHub pages instead of this
         if (isLocalHostAllowed()) {
             ALLOWED_HOSTS.add("localhost");
         }
@@ -93,7 +93,7 @@ public class SharedConstrains {
                     return true;
                 }
             }
-            Out.println("Check trusted(false): " + host);
+            Out.warn("Check trusted(false): " + host);
             return false;
 
         } catch (Exception e) {

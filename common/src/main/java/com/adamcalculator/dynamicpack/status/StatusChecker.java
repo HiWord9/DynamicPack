@@ -7,6 +7,9 @@ import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.Urls;
 import org.json.JSONObject;
 
+/**
+ * Check status from developer.
+ */
 public class StatusChecker {
     private static final String URL = "https://adamcalculator.github.io/DynamicPack/dynamicpack.status.v1.json";
 
@@ -16,18 +19,24 @@ public class StatusChecker {
     private static boolean isSafe = true;
     private static boolean isChecked = false;
 
-    public static void check() throws Exception {
+    public static void check() {
         Out.println("Checking status...");
-        String s = Urls.parseTextContent(URL, 1024 * 512);
-        JSONObject j = new JSONObject(s);
-        String platformKey;
-        JSONObject lat = j.getJSONObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));
-        isUpdateAvailable = lat.getLong("build") > SharedConstrains.VERSION_BUILD;
-        isSafe = lat.getLong("safe") <= SharedConstrains.VERSION_BUILD;
-        isFormatActual = lat.getLong("format") <= SharedConstrains.VERSION_BUILD;
 
-        isChecked = true;
-        Out.println(String.format("Status checked! platformKey=%s, isSafe=%s, isFormatActual=%s, isUpdateAvailable=%s", platformKey, isSafe, isFormatActual, isUpdateAvailable));
+        try {
+            String s = Urls.parseTextContent(URL, 1024 * 512);
+            JSONObject j = new JSONObject(s);
+            String platformKey;
+            JSONObject lat = j.getJSONObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));
+            isUpdateAvailable = lat.getLong("build") > SharedConstrains.VERSION_BUILD;
+            isSafe = lat.getLong("safe") <= SharedConstrains.VERSION_BUILD;
+            isFormatActual = lat.getLong("format") <= SharedConstrains.VERSION_BUILD;
+
+            isChecked = true;
+            Out.println(String.format("Status checked! platformKey=%s, isSafe=%s, isFormatActual=%s, isUpdateAvailable=%s", platformKey, isSafe, isFormatActual, isUpdateAvailable));
+
+        } catch (Exception e) {
+            Out.error("Error while checking status...", e);
+        }
     }
 
     private static String getLatestKeyForPlatform(Loader loader) {

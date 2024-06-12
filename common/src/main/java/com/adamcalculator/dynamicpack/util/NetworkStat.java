@@ -3,7 +3,6 @@ package com.adamcalculator.dynamicpack.util;
 import com.adamcalculator.dynamicpack.SharedConstrains;
 
 import java.io.IOException;
-import java.util.HashMap;
 
 public class NetworkStat {
     public static final long MAGIC_NO_STATISTIC = -1;

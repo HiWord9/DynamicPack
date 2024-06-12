@@ -2,6 +2,9 @@ package com.adamcalculator.dynamicpack.util;
 
 import java.nio.file.Path;
 
+/**
+ * Notify this class about all changes in files by mod.
+ */
 public class FilesLog {
     private static final String PREFIX = "[FilesLog] ";
 

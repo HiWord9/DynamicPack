@@ -5,8 +5,10 @@ import org.jetbrains.annotations.ApiStatus;
 import java.util.function.LongConsumer;
 
 public class FileDownloadConsumer implements LongConsumer {
-    private static final float MAGIC_DEV_BY_ZERO = -1000f;
-    private static final float MAGIC_OVERMAXING = 101f;
+    public static final float MAGIC_DEV_BY_ZERO = -1000f;
+    public static final float MAGIC_OVERMAXING = 101f;
+
+
     private long max = 0;
     private long latest = 0;
 
