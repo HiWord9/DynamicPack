@@ -1,65 +1,79 @@
-package com.adamcalculator.dynamicpack.pack;
+package com.adamcalculator.dynamicpack.pack.dynamicrepo;
 
-import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.InputValidator;
 import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.pack.BaseContent;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
+import com.adamcalculator.dynamicpack.pack.OverrideType;
+import com.adamcalculator.dynamicpack.pack.Remote;
+import com.adamcalculator.dynamicpack.sync.SyncBuilder;
 import com.adamcalculator.dynamicpack.util.PackUtil;
-import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
-import com.adamcalculator.dynamicpack.util.AFiles;
-import com.adamcalculator.dynamicpack.util.FileDownloadConsumer;
+import com.adamcalculator.dynamicpack.util.PathsUtil;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.Urls;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.LongConsumer;
 
 public class DynamicRepoRemote extends Remote {
     public static final String REPO_JSON = "dynamicmcpack.repo.json";
     public static final String REPO_BUILD = "dynamicmcpack.repo.build";
-    public static final String REPO_SIGNATURE = "dynamicmcpack.repo.json.sig";
 
 
-    Pack parent;
-    private JSONObject cachedCurrentJson;
-    private JSONObject cachedRemoteJson;
+    protected DynamicResourcePack parent; // parent
+    private JSONObject cachedCurrentJson; // root.current json
+    private JSONObject cachedRemoteJson; // root.remote json
     protected String url;
     protected String buildUrl;
     protected String packUrl;
-    protected String packSigUrl;
-    public String publicKey;
-    protected boolean skipSign;
 
+    /**
+     * <pre>
+     *  if key exists, value used for override content. If content is required it ignored...
+     * </pre>
+     */
     private final HashMap<String, Boolean> contentOverrides = new HashMap<>();
 
     public DynamicRepoRemote() {
     }
 
-    public void init(Pack pack, JSONObject remote, JSONObject current) {
+    /**
+     * Init this remote object and associate with pack
+     * @param pack parent
+     * @param remote root.remote
+     */
+    public void init(DynamicResourcePack pack, JSONObject remote) {
         this.parent = pack;
-        this.cachedCurrentJson = current;
         this.cachedRemoteJson = remote;
+        this.cachedCurrentJson = pack.getCurrentJson();
         this.url = remote.getString("url");
+        InputValidator.throwIsUrlInvalid(url);
         this.buildUrl = url + "/" + REPO_BUILD;
         this.packUrl = url + "/" + REPO_JSON;
-        this.packSigUrl = url + "/" + REPO_SIGNATURE;
-        this.publicKey = remote.optString("public_key", "").replace("\n", "").trim();
-        this.skipSign = remote.optBoolean("sign_no_required", false);
 
         recalculateContentOverrideFromJson();
 
-        if (skipSign != this.publicKey.isBlank()) {
-            throw new RuntimeException("Incompatible parameters set. Select one of: sign_no_required or public_key");
+        boolean signNoRequired = remote.optBoolean("sign_no_required", false);
+        if (signNoRequired == remote.has("public_key")) {
+            throw new RuntimeException("Please add sign_no_required=true");
         }
     }
 
+
+    /**
+     * Sync builder
+     */
+    public SyncBuilder syncBuilder() {
+        return new DynamicRepoSyncBuilder(parent, this);
+    }
+
+    /**
+     * Update this.contentOverrides from cachedRemoteJson
+     */
     private void recalculateContentOverrideFromJson() {
         this.contentOverrides.clear();
         if (cachedRemoteJson.has("content_override")) {
@@ -70,46 +84,59 @@ public class DynamicRepoRemote extends Remote {
         }
     }
 
+    /**
+     * Check dynamicmcpack.repo.build file
+     */
     @Override
     public boolean checkUpdateAvailable() throws IOException {
         String content = Urls.parseTextContent(buildUrl, 64).trim();
         return getCurrentBuild() != Long.parseLong(content);
     }
 
+    /**
+     * Get current build from cachedCurrentJson
+     */
     public long getCurrentBuild() {
         return cachedCurrentJson.optLong("build", -1);
     }
 
 
-    // currently not using. but in feature this may be used in settings screen to Enable/disable contents
+    /**
+     * Update client json <code>root.current.known_contents</code>
+     * @param repoContents json block repo json <code>root.contents</code>
+     */
     public void updateCurrentKnownContents(JSONArray repoContents) {
+        JSONObject newKnown = new JSONObject();
         if (cachedCurrentJson.has("known_contents")) {
             cachedCurrentJson.remove("known_contents");
         }
-        JSONObject newKnown = new JSONObject();
         cachedCurrentJson.put("known_contents", newKnown);
+
         for (Object _repoContent : repoContents) {
             JSONObject repoContent = (JSONObject) _repoContent;
-            String id = repoContent.getString("id");
-            boolean required = repoContent.optBoolean("required", false);
-            boolean defaultActive = repoContent.optBoolean("default_active", true);
-            JSONObject jsonObject = new JSONObject()
-                    .put("hash", repoContent.getString("hash"));
-            if (required) {
-                jsonObject.put("required", true);
-            }
-            jsonObject.put("default_active", defaultActive);
+
+            var id = repoContent.getString("id");
+            var required = repoContent.optBoolean("required", false);
+            var defaultActive = repoContent.optBoolean("default_active", true);
+            var hash = repoContent.getString("hash");
+
+
+            JSONObject cacheJson = new JSONObject()
+                    .put("hash", hash)
+                    .put("default_active", defaultActive);
+
+            if (required) cacheJson.put("required", true);
 
             String name = repoContent.optString("name", null);
             if (name != null) {
                 if (InputValidator.isContentNameValid(name)) {
-                    jsonObject.put("name", name);
+                    cacheJson.put("name", name);
                 } else {
                     Out.println("Name of content '" + id + "' not valid.");
                 }
             }
 
-            newKnown.put(id, jsonObject);
+            newKnown.put(id, cacheJson);
         }
     }
 
@@ -126,80 +153,17 @@ public class DynamicRepoRemote extends Remote {
         return null;
     }
 
-
-    @Override
-    public boolean sync(PackSyncProgress progress, boolean manually) throws Exception {
-        AtomicBoolean returnValue = new AtomicBoolean(false);
-        PackUtil.openPackFileSystem(parent.getLocation(), path -> {
-            try {
-                boolean t = sync0(progress, path);
-                returnValue.set(t);
-
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        });
-        return returnValue.get();
-    }
-
-    public boolean sync0(PackSyncProgress progress, Path path) throws IOException, NoSuchAlgorithmException {
-        String packUrlContent;
-
-        LongConsumer parseProgress = new FileDownloadConsumer() {
-            @Override
-            public void onUpdate(FileDownloadConsumer it) {
-                progress.downloading(REPO_JSON, it.getPercentage());
-            }
-        };
-        if (skipSign) {
-            packUrlContent = Urls.parseTextContent(packUrl, SharedConstrains.MOD_FILES_LIMIT, parseProgress);
-            Out.warn("Dynamic pack " + parent.getName() + " is skipping signing.");
-            progress.textLog("File parsed, verify skipped.");
-
-        } else {
-            // TODO: fix it
-            packUrlContent = Urls.parseTextContent(packUrl, SharedConstrains.MOD_FILES_LIMIT, parseProgress);
-            progress.textLog("Success parse and verify file.");
-        }
-
-        JSONObject repoJson = new JSONObject(packUrlContent);
-        long formatVersion;
-        if ((formatVersion = repoJson.getLong("formatVersion")) != 1) {
-            throw new RuntimeException("Incompatible formatVersion: " + formatVersion);
-        }
-
-        long minBuildForWork;
-        if ((minBuildForWork = repoJson.optLong("minimal_mod_build", SharedConstrains.VERSION_BUILD)) > SharedConstrains.VERSION_BUILD) {
-            throw new RuntimeException("Incompatible DynamicPack Mod version for this pack: required minimal_mod_build=" + minBuildForWork + ", but currently mod build is " + SharedConstrains.VERSION_BUILD);
-        }
-
-        String remoteName = repoJson.getString("name");
-        if (!InputValidator.isPackNameValid(remoteName)) {
-            throw new RuntimeException("Remote name of pack not valid.");
-        }
-
-
-        DynamicRepoSyncProcessV1 dynamicRepoSyncProcessV1 = new DynamicRepoSyncProcessV1(parent, this, progress, repoJson, path);
-        try {
-            dynamicRepoSyncProcessV1.run();
-            dynamicRepoSyncProcessV1.close();
-
-        } catch (Exception e) {
-            dynamicRepoSyncProcessV1.close();
-            throw e;
-        }
-        parent.getPackJson().getJSONObject("current").put("build", repoJson.getLong("build"));
-        parent.updateJsonLatestUpdate();
-
-        AFiles.nioWriteText(path.resolve(DynamicPackMod.CLIENT_FILE), parent.getPackJson().toString(2));
-
-        return dynamicRepoSyncProcessV1.isReloadRequired();
-    }
-
     public String getUrl() {
         return url;
     }
 
+    public String getPackUrl() {
+        return packUrl;
+    }
+
+    /**
+     * Is content active by contentOverrides (only settings)
+     */
     public boolean isContentActive(String id, boolean def) {
         if (contentOverrides.containsKey(id)) {
             return contentOverrides.get(id);
@@ -255,6 +219,6 @@ public class DynamicRepoRemote extends Remote {
 
 
         recalculateContentOverrideFromJson();
-        PackUtil.openPackFileSystem(parent.getLocation(), path -> AFiles.nioWriteText(path.resolve(DynamicPackMod.CLIENT_FILE), parent.getPackJson().toString(2)));
+        PackUtil.openPackFileSystem(parent.getLocation(), path -> PathsUtil.nioWriteText(path.resolve(SharedConstrains.CLIENT_FILE), parent.getPackJson().toString(2)));
     }
 }

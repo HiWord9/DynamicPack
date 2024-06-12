@@ -1,10 +1,10 @@
 package com.adamcalculator.dynamicpack;
 
-import com.adamcalculator.dynamicpack.pack.Pack;
+import com.adamcalculator.dynamicpack.client.GameStartSyncing;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.Remote;
 import com.adamcalculator.dynamicpack.util.*;
 import org.jetbrains.annotations.ApiStatus;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -13,111 +13,59 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public abstract class DynamicPackMod {
-	public static final String CLIENT_FILE = "dynamicmcpack.json";
-	public static final String MINECRAFT_META = "pack.mcmeta";
 
+	// singleton
 	public static DynamicPackMod INSTANCE;
-	protected static int manuallySyncThreadCounter = 0;
-	public boolean rescanPacksBlocked = false;
 
-	private boolean isPacksScanning = false;
-	private HashMap<String, Pack> packs = new HashMap<>();
+
+	private Loader loader = Loader.UNKNOWN;
 	private File gameDir;
 	private File resourcePacks;
-	private boolean minecraftInitialized = false;
-	private Loader loader = Loader.UNKNOWN;
+	private PacksContainer packsContainer;
+	private GameStartSyncing gameStartSyncing;
 
+	private boolean minecraftInitialized = false;
+	protected static int manuallySyncThreadCounter = 0;
 
 	public void init(File gameDir, Loader loader) {
 		if (INSTANCE != null) {
 			throw new RuntimeException("Already initialized!");
 		}
 		INSTANCE = this;
+		this.gameDir = gameDir;
 		this.loader = loader;
+		this.resourcePacks = new File(gameDir, "resourcepacks");
+		this.resourcePacks.mkdirs();
+
+		this.packsContainer = new PacksContainer();
+		this.gameStartSyncing = new GameStartSyncing();
 
 		Out.init(loader);
 		Out.println("Mod version: " + SharedConstrains.VERSION_NAME + " build: " + SharedConstrains.VERSION_BUILD);
-		this.gameDir = gameDir;
-		this.resourcePacks = new File(gameDir, "resourcepacks");
-		this.resourcePacks.mkdirs();
 		Remote.initRemoteTypes();
 
-		startSyncThread();
+		gameStartSyncing.start();
+	}
+	
+	
+	public void rescanPacks() {
+		packsContainer.rescan(resourcePacks);
 	}
 
-	/**
-	 * ONLY FOR FIRST INIT RUN! FOR MANUALLY USE startManuallySync!!!!!
-	 */
-	public abstract void startSyncThread();
+	public abstract boolean isModExists(String id);
 
+	/**
+	 * Manually re-sync all supported packs
+	 */
 	public abstract void startManuallySync();
 
-	public void rescanPacks() {
-		if (isPacksScanning) {
-			Out.warn("rescanPacks already in scanning!");
-			return;
-		}
-		if (rescanPacksBlocked) {
-			Out.warn("rescanPacks blocked");
-			return;
-		}
-		isPacksScanning = true;
-		List<String> forDelete = new ArrayList<>(packs.keySet());
-		for (File packFile : AFiles.lists(resourcePacks)) {
-			try {
-				PackUtil.openPackFileSystem(packFile, path -> {
-					Path dynamicPackPath = path.resolve(CLIENT_FILE);
-					if (Files.exists(dynamicPackPath)) {
-						Out.println("+ Pack " + packFile.getName() + " supported by mod!");
-                        try {
-                            processPack(packFile, PackUtil.readJson(dynamicPackPath));
-							forDelete.remove(packFile.getName());
-                        } catch (Exception e) {
-                            throw new RuntimeException(e);
-                        }
-                    } else {
-						Out.println("- Pack " + packFile.getName() + " not supported by mod.");
-					}
-                });
-			} catch (Exception e) {
-				if (e instanceof FailedOpenPackFileSystemException) {
-					Out.warn("Error while processing pack " + packFile.getName() + ": " + e.getMessage());
-				} else {
-					Out.error("Error while processing pack: " + packFile.getName(), e);
-				}
-			}
-		}
-		for (String s : forDelete) {
-			Out.println("Pack " + s + " no longer exists!");
-			packs.remove(s);
-		}
-		isPacksScanning = false;
-	}
-
-
-
-	private void processPack(File location, JSONObject json) {
-		long formatVersion = json.getLong("formatVersion");
-		Pack oldestPack = packs.getOrDefault(location.getName(), null);
-		if (formatVersion == 1) {
-			Pack pack = new Pack(location, json);
-			if (oldestPack != null) {
-				pack.saveReScanData(oldestPack);
-			}
-			packs.put(location.getName(), pack);
-
-		} else {
-			throw new RuntimeException("Unsupported formatVersion: " + formatVersion);
-		}
-	}
+	public abstract void needResourcesReload();
 
 	/**
-	 * API FOR MODPACKERS etc all-in-one packs
+	 * API FOR MODPACKERS and etc all-in-one packs
 	 * @param host host to add.
 	 * @param requester any object. It is recommended that .toString explicitly give out your name.
 	 */
@@ -125,13 +73,13 @@ public abstract class DynamicPackMod {
 	public static void addAllowedHosts(String host, Object requester) throws Exception {
 		SharedConstrains.addAllowedHosts(host, requester);
 	}
-
+	
 	public boolean isNameIsDynamic(String name) {
 		return getDynamicPackByMinecraftName(name) != null;
 	}
 
-	public Pack getDynamicPackByMinecraftName(String name) {
-		for (Pack pack : getPacks()) {
+	public DynamicResourcePack getDynamicPackByMinecraftName(String name) {
+		for (DynamicResourcePack pack : getPacks()) {
 			if (("file/" + pack.getName()).equals(name)) {
 				return pack;
 			}
@@ -139,7 +87,7 @@ public abstract class DynamicPackMod {
 		return null;
 	}
 
-	public boolean isResourcePackActive(Pack pack) throws IOException {
+	public boolean isResourcePackActive(DynamicResourcePack pack) throws IOException {
 		List<String> lines;
 		try {
 			lines = Files.readAllLines(new File(getGameDir(), "options.txt").toPath(), StandardCharsets.UTF_8);
@@ -163,8 +111,12 @@ public abstract class DynamicPackMod {
 		return INSTANCE.gameDir;
 	}
 
-	public static Pack[] getPacks() {
-		return INSTANCE.packs.values().toArray(new Pack[0]);
+	public static DynamicResourcePack[] getPacks() {
+		return INSTANCE.packsContainer.getPacks();
+	}
+
+	public PacksContainer getPacksContainer() {
+		return packsContainer;
 	}
 
 	public static Loader getLoader() {
@@ -185,5 +137,17 @@ public abstract class DynamicPackMod {
 
 	public Path getResourcePackDir() {
 		return resourcePacks.toPath();
+	}
+
+	public void blockRescan(boolean b) {
+		if (b) {
+			packsContainer.lockRescan();
+		} else {
+			packsContainer.unlockRescan();
+		}
+	}
+
+	public GameStartSyncing getGameStartSyncing() {
+		return gameStartSyncing;
 	}
 }

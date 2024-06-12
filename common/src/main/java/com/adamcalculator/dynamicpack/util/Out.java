@@ -22,7 +22,7 @@ public class Out {
         LOGGER.info(PREFIX + o);
     }
 
-    public static void error(String s, Exception e) {
+    public static void error(String s, Throwable e) {
         if (!ENABLE) return;
         if (USE_SOUT) {
             System.err.println(PREFIX + s);

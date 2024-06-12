@@ -17,6 +17,12 @@ public class InputValidator {
         return matcher.matches();
     }
 
+    public static void checkContentIdValid(String id) {
+        if (!isContentIdValid(id)) {
+            throw new RuntimeException("Id of content is not valid: " + safeOutput(id));
+        }
+    }
+
     public static boolean isContentNameValid(String input) {
         if (input == null) {
             return false;
@@ -53,11 +59,18 @@ public class InputValidator {
             throw new SecurityException("null", new NullPointerException("url to valid is null"));
         }
         if (!isUrlValid(url)) {
-            throw new SecurityException("Not valid url: " + new String(url.getBytes(StandardCharsets.US_ASCII), StandardCharsets.US_ASCII));
+            throw new SecurityException("Not valid url: " + safeOutput(url));
         }
     }
 
     public static boolean isUrlValid(String url) {
         return URL_PATTERN.matcher(url).matches();
+    }
+
+    private static String safeOutput(String s) {
+        if (s.length() >= 100) {
+            s = s.substring(0, 100);
+        }
+        return new String(s.getBytes(StandardCharsets.US_ASCII), StandardCharsets.US_ASCII);
     }
 }

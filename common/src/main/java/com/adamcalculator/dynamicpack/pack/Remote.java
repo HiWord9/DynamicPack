@@ -1,6 +1,7 @@
 package com.adamcalculator.dynamicpack.pack;
 
-import com.adamcalculator.dynamicpack.sync.PackSyncProgress;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
+import com.adamcalculator.dynamicpack.sync.SyncBuilder;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -23,9 +24,15 @@ public abstract class Remote {
         REMOTES.put("dynamic_repo", DynamicRepoRemote::new);
     }
 
-    public abstract void init(Pack pack, JSONObject remote, JSONObject current);
+    /**
+     * Init this remote object and associate with pack
+     * @param pack parent
+     * @param remote root.remote
+     */
+    public abstract void init(DynamicResourcePack pack, JSONObject remote);
+
+    public abstract SyncBuilder syncBuilder();
 
     public abstract boolean checkUpdateAvailable() throws IOException;
 
-    public abstract boolean sync(PackSyncProgress progress, boolean manually) throws Exception;
 }

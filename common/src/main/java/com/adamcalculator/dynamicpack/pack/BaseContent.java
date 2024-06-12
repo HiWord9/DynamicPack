@@ -1,5 +1,7 @@
 package com.adamcalculator.dynamicpack.pack;
 
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
+
 public class BaseContent {
     private final DynamicRepoRemote parent;
     private final String id;

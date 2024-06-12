@@ -1,6 +1,6 @@
 package tests;
 
-import com.adamcalculator.dynamicpack.pack.DynamicRepoSyncProcessV1;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoSyncBuilder;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.Urls;
 import org.junit.jupiter.api.Assertions;
@@ -21,25 +21,25 @@ public class SecurityTrustedUrlsTest {
 
 
         Assertions.assertDoesNotThrow(() -> {
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets", "minecraft/lang/en_us.json");
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets/", "minecraft/lang/en_us.json");
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets", "/minecraft/lang/en_us.json");
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets", "/minecraft/lang/en_us.json");
-            DynamicRepoSyncProcessV1.getAndCheckPath("/assets/", "///minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets", "minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets/", "minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets", "/minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets", "/minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("/assets/", "///minecraft/lang/en_us.json");
         });
 
 
 
         Assertions.assertThrows(Exception.class, () -> {
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
         });
 
         Assertions.assertThrows(Exception.class, () -> {
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
         });
 
         Assertions.assertThrows(Exception.class, () -> {
-            DynamicRepoSyncProcessV1.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
+            DynamicRepoSyncBuilder.getAndCheckPath("assets/../../../../", "minecraft/lang/en_us.json");
         });
 
     }

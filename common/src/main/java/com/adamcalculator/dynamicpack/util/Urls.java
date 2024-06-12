@@ -107,25 +107,37 @@ public class Urls {
      * This method return InputStream of url WITHOUT any checks, except sizeLimit
      */
     private static InputStream __unsafeInputStreamFromUrl(String url, long sizeLimit, /*@Nullable*/ LongConsumer progress) throws IOException {
-        URL urlObj = new URL(url);
-        URLConnection connection = urlObj.openConnection();
-        long length = connection.getContentLengthLong();
-        if (length > sizeLimit) {
-            throw new RuntimeException("File size file exceeds limit " + length + "bytes > " + sizeLimit + "bytes. url=" + url);
-        }
-        if (progress != null){
-            progress.accept(length);
-            progress.accept(0);
-        }
-        return connection.getInputStream();
+        // +-approximate amount spent on this request
+        long size = SharedConstrains.HTTP_MINIMAL_HEADER_SIZE + url.length();
+
+        // wrapped by NetworkStat for speedtest works
+        return NetworkStat.runNetworkTask(size, () -> {
+            URL urlObj = new URL(url);
+            URLConnection connection = urlObj.openConnection();
+            long length = connection.getContentLengthLong();
+            if (length > sizeLimit) {
+                throw new RuntimeException("File size file exceeds limit " + length + "bytes > " + sizeLimit + "bytes. url=" + url);
+            }
+            if (progress != null){
+                progress.accept(length);
+                progress.accept(0);
+            }
+            return connection.getInputStream();
+        });
     }
 
     protected static String _parseTextFromStream(InputStream stream, /* Nullable */ LongConsumer progress) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+
         byte[] dataBuffer = new byte[SharedConstrains.URLS_BUFFER_SIZE];
         int bytesRead;
         long total = 0;
-        while ((bytesRead = stream.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) != -1) {
+        while (true) {
+            long startTime = System.currentTimeMillis();
+            if ((bytesRead = stream.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
+                break;
+            }
+
             byteArrayOutputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
 
@@ -134,6 +146,7 @@ public class Urls {
             }
 
             SharedConstrains.debugNetwork(bytesRead, total);
+            NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
         }
         String s = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
         byteArrayOutputStream.close();
@@ -151,7 +164,11 @@ public class Urls {
         byte[] dataBuffer = new byte[SharedConstrains.URLS_BUFFER_SIZE];
         int bytesRead;
         long total = 0;
-        while ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) != -1) {
+        while (true) {
+            long startTime = System.currentTimeMillis();
+            if ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
+                break;
+            }
             outputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
             if (progress != null) {
@@ -159,7 +176,10 @@ public class Urls {
             }
 
 
-            if (isNetwork) SharedConstrains.debugNetwork(bytesRead, total);
+            if (isNetwork) {
+                SharedConstrains.debugNetwork(bytesRead, total);
+                NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
+            }
         }
 
         outputStream.flush();
@@ -172,17 +192,25 @@ public class Urls {
     protected static void _transferStreamsWithHash(String hash, InputStream inputStream, OutputStream outputStream, LongConsumer progress) throws IOException {
         boolean isNetwork = !(inputStream instanceof ByteArrayInputStream); // may other check?, but only for debug...
 
+
         BufferedInputStream in = new BufferedInputStream(inputStream);
         ByteArrayOutputStream tempBufferOutputStream = new ByteArrayOutputStream();
 
         byte[] dataBuffer = new byte[SharedConstrains.URLS_BUFFER_SIZE];
         int bytesRead;
         long total = 0;
-        while ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) != -1) {
+        while (true) {
+            long startTime = System.currentTimeMillis();
+            if ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
+                break;
+            }
             tempBufferOutputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
             progress.accept(total);
-            if (isNetwork) SharedConstrains.debugNetwork(bytesRead, total);
+            if (isNetwork) {
+                SharedConstrains.debugNetwork(bytesRead, total);
+                NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
+            }
         }
         in.close();
 

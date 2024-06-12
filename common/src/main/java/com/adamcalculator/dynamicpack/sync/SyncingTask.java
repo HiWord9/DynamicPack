@@ -1,154 +1,134 @@
 package com.adamcalculator.dynamicpack.sync;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.pack.Pack;
-import com.adamcalculator.dynamicpack.sync.state.StateDownloadDone;
-import com.adamcalculator.dynamicpack.sync.state.StateDownloading;
-import com.adamcalculator.dynamicpack.sync.state.SyncProgressState;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.util.Out;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Sync task.
  * Re-check all packs and update packs with update available
  */
-public class SyncingTask implements Runnable {
-    public static boolean isSyncing = false;
-    public static String syncingLog1 = "";
-    public static String syncingLog2 = "";
-    public static String syncingLog3 = "";
+public class SyncingTask {
+    private static boolean isSyncing = false;
+    @NotNull private static String syncingLog1 = "";
+    @NotNull private static String syncingLog2 = "";
+    @NotNull private static String syncingLog3 = "";
+    public static long eta;
+    @Nullable public static String currentPackName;
 
-    private final boolean manually; // skip checkUpdateAvailable().
-    private boolean reloadRequired = false;
-    private Pack currentPack;
 
-    public SyncingTask(boolean manually) {
-        this.manually = manually;
-    }
-
-    @Override
-    public void run() {
-        if (isSyncing) {
-            Out.warn("SyncTask already syncing....");
-            return;
+    /**
+     * @param runnable to run
+     * @throws RuntimeException if task already running (check isSyncing before call)
+     */
+    public static void launchTaskAsSyncing(Runnable runnable) {
+        if (isSyncing()) {
+            throw new RuntimeException("Failed to launchTaskAsSyncing. Other task currently working...");
         }
-        isSyncing = true;
-        Out.println("SyncTask started!");
-        log("Syncing started...");
-        onSyncStart();
-        DynamicPackMod.INSTANCE.rescanPacks();
-        DynamicPackMod.INSTANCE.rescanPacksBlocked = true;
-        for (Pack pack : DynamicPackMod.getPacks()) {
-            currentPack = pack;
-            try {
-                pack.sync(createSyncProgressForPack(pack), manually);
-                onPackDoneSuccess(pack);
-                log(pack.getName() + " success");
-            } catch (Exception e) {
-                Out.error("Pack error: " + pack.getName(), e);
-                log(pack.getName() + " error: " + e);
-                onPackError(pack, e);
-            }
-        }
-        DynamicPackMod.INSTANCE.rescanPacksBlocked = false;
-        onSyncDone(reloadRequired);
-        Out.println("SyncTask ended!");
-        isSyncing = false;
-        clearLog();
+        var mod = DynamicPackMod.INSTANCE;
+        setSyncing(true);
+        mod.rescanPacks();
+        mod.blockRescan(true);
+        log("[SyncingTask] launchTaskAsSyncing start!");
+        runnable.run();
+        log("[SyncingTask] launchTaskAsSyncing end!");
+        setSyncing(false);
+        mod.blockRescan(false);
+        SyncingTask.currentPackName = null;
     }
 
-    public void onPackDoneSuccess(Pack pack) {}
-
-    public void onSyncStart() {}
-
-    public void onSyncDone(boolean reloadRequired) {}
-
-    public void onPackError(Pack pack, Exception e) {}
-
-    public void onStateChanged(Pack pack, SyncProgressState state) {}
-
-
-    private void setState(SyncProgressState state) {
-        try {
-            onStateChanged(currentPack, state);
-        } catch (Exception e) {
-            Out.error("onStateChanged exception!!!", e);
-        }
-    }
-
-    public PackSyncProgress createSyncProgressForPack(Pack pack) {
-        return new PackSyncProgress() {
-            private StateDownloading cachedDownloading = null;
-
-            private void _packLog(String s) {
-                Out.println(pack.getName() + ": " + s);
-            }
-
-            @Override
-            public void start() {
-                log("Sync started " + pack.getName());
-                _packLog("Sync started.");
-            }
-
-            @Override
-            public void done(boolean reloadRequired) {
-                _packLog("Sync done. pack reloadRequired=" + reloadRequired);
-
-                if (reloadRequired && !SyncingTask.this.reloadRequired) {
-                    try {
-                        if (DynamicPackMod.INSTANCE.isResourcePackActive(pack)) {
-                            SyncingTask.this.reloadRequired = true;
-                            _packLog("SyncTask.reloadRequired now true!");
-                        }
-                    } catch (Exception e) {
-                        _packLog("SyncTask.reloadRequired now true, but check thrown exception: " + e);
-                        SyncingTask.this.reloadRequired = true;
-                    }
-                }
-            }
-
-            @Override
-            public void textLog(String s) {
-                _packLog("[textLog] " + s);
-                log(s);
-            }
-
-            @Override
-            public void downloading(String name, float percentage) {
-                if (cachedDownloading == null) {
-                    cachedDownloading = new StateDownloading(name);
-                    log("Downloading " + name);
-                } else {
-                    if (!cachedDownloading.getName().equals(name)) {
-                        cachedDownloading.setName(name);
-                        log("Downloading " + name);
-                    }
-                }
-                if (percentage == 100f) {
-                    setState(new StateDownloadDone());
-                    return;
-                }
-                syncingLog3 = "Downloading " + name + " " + (Math.round(percentage * 100f) / 100f) + "%";
-                cachedDownloading.setPercentage(Math.round(percentage * 10f) / 10f);
-                setState(cachedDownloading);
-            }
-
-            @Override
-            public void stateChanged(SyncProgressState state) {
-                setState(state);
-            }
-        };
-    }
-
-    private void log(String s) {
-        Out.debug("log: " + s);
+    public static void log(String s) {
+        Out.debug("[SyncingTask] log: " + s);
         syncingLog1 = syncingLog2;
         syncingLog2 = syncingLog3;
         syncingLog3 = s;
     }
 
-    private void clearLog() {
+    public static void clearLog() {
         syncingLog3 = "";
         syncingLog2 = "";
         syncingLog1 = "";
+    }
+
+    public static String getLogs() {
+        return syncingLog1 + "\n" + syncingLog2 + "\n" + syncingLog3;
+    }
+
+    public static void setSyncing(boolean isSyncing) {
+        SyncingTask.isSyncing = isSyncing;
+    }
+
+    public static boolean isSyncing() {
+        return isSyncing;
+    }
+
+    public SyncingTask() {
+    }
+
+
+    public SyncBuilder rootSyncBuilder() throws Exception {
+        Set<SyncBuilder> set = new HashSet<>();
+        long totalSize = 0;
+        boolean updateAvailable = false;
+        for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
+            var builder = pack.syncBuilder();
+            builder.init();
+            set.add(builder);
+
+            totalSize += builder.getUpdateSize();
+            if (builder.isUpdateAvailable()) {
+                updateAvailable = true;
+            }
+        }
+
+        Out.debug("[SyncingTask] rootSyncBuilder() totalSize=" + totalSize + " updateAvailable=" + updateAvailable);
+
+
+        final boolean finalUpdateAvailable = updateAvailable;
+        final long finalTotalSize = totalSize;
+        return new SyncBuilder() {
+            @Override
+            public void init() throws Exception {
+                // do nothing here!!!
+            }
+
+            @Override
+            public boolean isUpdateAvailable() {
+                return finalUpdateAvailable;
+            }
+
+            @Override
+            public long getUpdateSize() {
+                return finalTotalSize;
+            }
+
+            @Override
+            public long getDownloadedSize() {
+                long updated = 0;
+                for (SyncBuilder syncBuilder : set) {
+                    updated += syncBuilder.getDownloadedSize();
+                }
+                return updated;
+            }
+
+            @Override
+            public boolean doUpdate(SyncProgress progress) throws Exception {
+                boolean reload = false;
+                for (SyncBuilder syncBuilder : set) {
+                    if (syncBuilder.isUpdateAvailable()) {
+                        boolean rel = syncBuilder.doUpdate(progress);
+                        if (rel) {
+                            reload = true;
+                        }
+                    }
+                }
+                return reload;
+            }
+        };
     }
 }

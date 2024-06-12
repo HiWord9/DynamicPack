@@ -34,6 +34,17 @@ public class FileDownloadConsumer implements LongConsumer {
         return (float) latest * 100f / (float) max;
     }
 
+    /**
+     * In seconds
+     */
+    public long getRemaining() {
+        return NetworkStat.remainingETA(max - latest);
+    }
+
+    public long getLatest() {
+        return latest;
+    }
+
     @ApiStatus.OverrideOnly
     public void onUpdate(FileDownloadConsumer it) {
         // override it

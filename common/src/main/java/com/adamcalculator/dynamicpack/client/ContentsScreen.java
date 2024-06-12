@@ -2,9 +2,9 @@ package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.pack.BaseContent;
-import com.adamcalculator.dynamicpack.pack.DynamicRepoRemote;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.OverrideType;
-import com.adamcalculator.dynamicpack.pack.Pack;
 import com.adamcalculator.dynamicpack.util.Out;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -21,16 +21,16 @@ import java.util.function.Consumer;
 
 public class ContentsScreen extends Screen {
     private final Screen parent;
-    private final Pack pack;
+    private final DynamicResourcePack pack;
     private ContentsList contentsList;
-    private final Consumer<Pack> onPackReSync = pack -> Compat.runAtUI(this::onClose);
+    private final Consumer<DynamicResourcePack> onPackReSync = pack -> Compat.runAtUI(this::onClose);
     private boolean syncOnExit = false;
     private Button doneButton;
     private Button resetButton;
 
     protected final LinkedHashMap<BaseContent, OverrideType> preChangeStates = new LinkedHashMap<>();
 
-    protected ContentsScreen(Screen parent, Pack pack) {
+    protected ContentsScreen(Screen parent, DynamicResourcePack pack) {
         super(Component.translatable("dynamicpack.screen.pack_contents.title"));
         this.parent = parent;
         this.pack = pack;

@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * For integrate to ResourcePacks screen
+ * For integrate button to ResourcePacks screen
  */
 @Mixin(TransferableSelectionList.PackEntry.class)
 public abstract class ResourcePackEntryMixin {

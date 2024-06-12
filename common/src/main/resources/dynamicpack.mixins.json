@@ -7,10 +7,13 @@
   "client": [
     "MinecraftClientMixin",
     "ResourcePackEntryMixin",
-    "ResourcePackScreenMixin"
+    "ResourcePackScreenMixin",
+    "PackRepositoryMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-  }
+  },
+  "mixins": [
+  ]
 }
 

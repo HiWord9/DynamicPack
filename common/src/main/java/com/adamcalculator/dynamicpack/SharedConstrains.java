@@ -25,7 +25,25 @@ public class SharedConstrains {
     public static final long GZIP_LIMIT = megabyte(50); // 50 MB of .gz file
     public static final long MOD_FILES_LIMIT = megabyte(8);
     public static final String MODRINTH_URL = "https://modrinth.com/mod/dynamicpack";
+    public static final long NETWORK_STAT_RESET_LIMIT = megabyte(3);
+
+    // Settings
+    public static final int MAX_ATTEMPTS_TO_DOWNLOAD_FILE = 3;
+    public static final int JSON_INDENTS = 2;
     public static int URLS_BUFFER_SIZE = 1024; // TODO: Add to config...
+
+    // const
+    public static final long HTTP_MINIMAL_HEADER_SIZE = 24;
+    public static final String CLIENT_FILE = "dynamicmcpack.json";
+    public static final String MINECRAFT_META = "pack.mcmeta";
+    public static final String UNKNOWN_PACK_MCMETA = """
+                {
+                  "pack": {
+                    "pack_format": 17,
+                    "description": "Unknown DynamicPack resource-pack..."
+                  }
+                }
+                """;
 
     private static final Set<String> ALLOWED_HOSTS = new HashSet<>();
     static {
@@ -69,11 +87,9 @@ public class SharedConstrains {
             String host = uri.getHost();
             for (String allowedHost : ALLOWED_HOSTS) {
                 if (host.equals(allowedHost)) {
-                    Out.debug("Check trusted(true): " + host);
                     return true;
                 }
                 if (host.endsWith("." + allowedHost)) {
-                    Out.debug("Check trusted(true): " + host);
                     return true;
                 }
             }
@@ -87,6 +103,15 @@ public class SharedConstrains {
 
     public static long megabyte(long mb) {
         return 1024L * 1024L * mb;
+    }
+
+    public static String speedToString(long bytesPerSec) {
+        if (bytesPerSec >= 1024) {
+            return (bytesPerSec / 1024) + " KiB/s";
+
+        } else  {
+            return bytesPerSec + " B/s";
+        }
     }
 
     public static boolean isBlockAllNotTrustedNetworks() {

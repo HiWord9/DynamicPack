@@ -1,8 +1,8 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.pack.DynamicRepoRemote;
-import com.adamcalculator.dynamicpack.pack.Pack;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.sync.SyncingTask;
 import com.adamcalculator.dynamicpack.util.TranslatableException;
 import net.minecraft.ChatFormatting;
@@ -20,13 +20,13 @@ import java.util.function.Consumer;
 
 public class DynamicPackScreen extends Screen {
     private final Screen parent;
-    private Pack pack;
+    private DynamicResourcePack pack;
     private final MutableComponent screenDescText;
     private Button syncButton;
-    private final Consumer<Pack> destroyListener = this::setPack;
+    private final Consumer<DynamicResourcePack> destroyListener = this::setPack;
     private Button contentsButton;
 
-    public DynamicPackScreen(Screen parent, Pack pack) {
+    public DynamicPackScreen(Screen parent, DynamicResourcePack pack) {
         super(Component.literal(pack.getName()).withStyle(ChatFormatting.BOLD));
         this.pack = pack;
         this.minecraft = Minecraft.getInstance();
@@ -35,7 +35,7 @@ public class DynamicPackScreen extends Screen {
         setPack(pack);
     }
 
-    private void setPack(Pack pack) {
+    private void setPack(DynamicResourcePack pack) {
         if (this.pack != null) {
             this.pack.removeDestroyListener(destroyListener);
         }
@@ -46,8 +46,8 @@ public class DynamicPackScreen extends Screen {
     @Override
     public void render(@NotNull GuiGraphics context, int mouseX, int mouseY, float delta) {
         Compat.renderBackground(this, context, mouseX, mouseY, delta);
-        syncButton.active = !SyncingTask.isSyncing;
-        contentsButton.active = !SyncingTask.isSyncing;
+        syncButton.active = !SyncingTask.isSyncing();
+        contentsButton.active = !SyncingTask.isSyncing();
         int h = 20;
         Compat.drawString(context, this.font, this.title, 20, 8, 16777215);
         Compat.drawString(context, this.font, screenDescText, 20, 20 + h, 16777215);
@@ -59,10 +59,8 @@ public class DynamicPackScreen extends Screen {
             h+=10;
         }
 
-        if (SyncingTask.isSyncing) {
-            Compat.drawWrappedString(context, SyncingTask.syncingLog1, 20, 78+30 + h, 500, 99, 0xCCCCCC);
-            Compat.drawWrappedString(context, SyncingTask.syncingLog2, 20, 78+30+20 + h, 500, 99, 0xCCCCCC);
-            Compat.drawWrappedString(context, SyncingTask.syncingLog3, 20, 78+30+40 + h, 500, 99, 0xCCCCCC);
+        if (SyncingTask.isSyncing()) {
+            Compat.drawWrappedString(context, SyncingTask.getLogs(), 20, 78+30 + h, 500, 99, 0xCCCCCC);
         }
 
         super.render(context, mouseX, mouseY, delta);

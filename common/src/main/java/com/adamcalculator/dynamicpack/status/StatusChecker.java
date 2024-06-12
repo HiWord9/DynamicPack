@@ -18,7 +18,7 @@ public class StatusChecker {
 
     public static void check() throws Exception {
         Out.println("Checking status...");
-        String s = Urls.parseTextContent(URL, 1024 * 1024 * 128);
+        String s = Urls.parseTextContent(URL, 1024 * 512);
         JSONObject j = new JSONObject(s);
         String platformKey;
         JSONObject lat = j.getJSONObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));

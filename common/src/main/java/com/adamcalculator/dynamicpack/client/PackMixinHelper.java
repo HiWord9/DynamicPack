@@ -1,7 +1,7 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.pack.Pack;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.packs.TransferableSelectionList;
@@ -14,7 +14,7 @@ public class PackMixinHelper {
     private static final ResourceLocation BUTTON_WARNING_TEXTURE = ResourceLocation.tryBuild("dynamicpack", "select_button_warning.png");
     private static final ResourceLocation BUTTON_SYNCING_TEXTURE = ResourceLocation.tryBuild("dynamicpack", "select_button_syncing.png");
 
-    private static void drawTexture(GuiGraphics context, Pack pack, int x, int y, int i, int j, boolean hovered) {
+    private static void drawTexture(GuiGraphics context, DynamicResourcePack pack, int x, int y, int i, int j, boolean hovered) {
         Exception latestException = pack.getLatestException();
         if (pack.isSyncing()) {
             Compat.drawTexture(context, BUTTON_TEXTURE, x + 174, y+16, 0.0F, ((i >= 174 && j >= 16 && hovered) ? 16f : 0f), 16, 16, 16, 32);
@@ -36,7 +36,7 @@ public class PackMixinHelper {
 
     public static void renderResourcePackEntry(Object resourcePackEntryMixin, GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta, CallbackInfo ci) {
         TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry) resourcePackEntryMixin;
-        Pack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
+        DynamicResourcePack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
         if (pack != null) {
             int i = mouseX - x;
             int j = mouseY - y;
@@ -46,7 +46,7 @@ public class PackMixinHelper {
 
     public static void mouseClicked(Object resourcePackEntryMixin, TransferableSelectionList widget, double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry) resourcePackEntryMixin;
-        Pack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
+        DynamicResourcePack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
         if (pack != null) {
             double d = mouseX - (double)widget.getRowLeft();
             double e = mouseY - (double)widget.getRowTop(widget.children().indexOf(entry));
@@ -59,7 +59,7 @@ public class PackMixinHelper {
         }
     }
 
-    private static void openPackScreen(Pack pack) {
+    private static void openPackScreen(DynamicResourcePack pack) {
         Minecraft.getInstance().setScreen(new DynamicPackScreen(Minecraft.getInstance().screen, pack));
     }
 

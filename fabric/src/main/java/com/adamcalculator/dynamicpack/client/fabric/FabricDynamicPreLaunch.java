@@ -28,4 +28,9 @@ public class FabricDynamicPreLaunch extends DynamicPackModBase implements PreLau
     private void onJoin(ClientPacketListener clientPacketListener, PacketSender packetSender, Minecraft minecraft) {
         onWorldJoinForUpdateChecks(Minecraft.getInstance().player);
     }
+
+    @Override
+    public boolean isModExists(String id) {
+        return FabricLoader.getInstance().isModLoaded(id);
+    }
 }

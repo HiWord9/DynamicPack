@@ -12,8 +12,25 @@ import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
 import java.util.stream.Stream;
 
-public class AFiles {
-    public static File[] lists(File file) {
+public class PathsUtil {
+    /**
+     * Delete path-file and log
+     */
+    public static void delete(Path path) throws IOException {
+        Files.delete(path);
+        FilesLog.deleted(path);
+    }
+
+    /**
+     * Create path-file and log
+     */
+    public static void createFile(Path path) throws IOException {
+        Files.createFile(path);
+        FilesLog.created(path);
+    }
+
+
+    public static File[] listFiles(File file) {
         return file.listFiles();
     }
 
@@ -50,6 +67,7 @@ public class AFiles {
                 throw new RuntimeException("File not a directory.");
             }
             FileUtils.deleteDirectory(file);
+            FilesLog.deleted(file.toPath());
 
         } catch (IOException e) {
             throw new RuntimeException("Exception while recursive delete dir " + file, e);
@@ -70,6 +88,7 @@ public class AFiles {
      * Delete path and remove empty parent dirs
      */
     public static void nioSmartDelete(Path toDel) throws IOException {
+        FilesLog.deleted(toDel);
         Path toDelParent = toDel.getParent();
         Files.deleteIfExists(toDel);
         if (toDelParent != null && _nioIsDirExistsAndEmpty(toDelParent)) {
@@ -108,4 +127,5 @@ public class AFiles {
             throw new RuntimeException("nioReadText exception!", e);
         }
     }
+
 }
