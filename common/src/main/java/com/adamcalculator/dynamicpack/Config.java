@@ -1,10 +1,9 @@
 package com.adamcalculator.dynamicpack;
 
 
-import com.adamcalculator.dynamicpack.policy.PackTrustLevel;
+import com.adamcalculator.dynamicpack.util.JsonUtils;
 import com.adamcalculator.dynamicpack.util.Out;
-import com.adamcalculator.dynamicpack.util.PathsUtil;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -13,7 +12,6 @@ import java.util.function.Consumer;
 
 public class Config {
     private final int formatVersion = 1; // do not touch
-    private PackTrustLevel defaultTrustLevel = PackTrustLevel.ASK_TO_UPDATE;
 
     public static void processChanges(Consumer<Config> itConsumer) {
         var cfg = DynamicPackMod.getConfig();
@@ -34,11 +32,10 @@ public class Config {
 
 
         try {
-            JSONObject json = PathsUtil.readJson(file.toPath());
-
-            int formatVersion = json.optInt("formatVersion", 0);
+            JsonObject json = JsonUtils.readJson(file.toPath());
+            int formatVersion = JsonUtils.optInt(json, "formatVersion", 0);
             if (formatVersion == 1) {
-                cfg.defaultTrustLevel = PackTrustLevel.valueOf(json.optString("defaultTrustLevel", cfg.defaultTrustLevel.name()).toUpperCase());
+                // sets variables here
 
             } else {
                 Out.warn("Unsupported formatVersion of config: " + formatVersion + " (default loaded)");
@@ -54,14 +51,14 @@ public class Config {
 
     public void save() {
         try {
-            JSONObject json = new JSONObject();
+            JsonObject json = new JsonObject();
 
-            json.put("formatVersion", formatVersion)
-                    .put("defaultTrustLevel", defaultTrustLevel.name().toLowerCase());
+            json.addProperty("formatVersion", formatVersion);
+            // put variables here
 
             File file = DynamicPackMod.getConfigFile();
             file.createNewFile();
-            Files.writeString(file.toPath(), json.toString(SharedConstrains.JSON_INDENTS), StandardOpenOption.WRITE);
+            Files.writeString(file.toPath(), JsonUtils.toString(json), StandardOpenOption.WRITE);
 
         } catch (Exception e) {
             Out.error("Config save failed :(", e);

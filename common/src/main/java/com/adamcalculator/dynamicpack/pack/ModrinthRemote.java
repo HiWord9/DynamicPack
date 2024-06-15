@@ -3,11 +3,11 @@ package com.adamcalculator.dynamicpack.pack;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
-import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.SyncProgress;
 import com.adamcalculator.dynamicpack.util.*;
-import org.json.JSONArray;
-import org.json.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -18,7 +18,7 @@ import java.util.NoSuchElementException;
  */
 public class ModrinthRemote extends Remote {
     private DynamicResourcePack parent; // parent
-    private JSONObject cachedCurrentJson; // root.current json
+    private JsonObject cachedCurrentJson; // root.current json
     private String projectId;
     private String gameVersion;
     private boolean usesCurrentGameVersion; // uses launched game ver
@@ -33,17 +33,17 @@ public class ModrinthRemote extends Remote {
      * @param pack parent
      * @param remote root.remote
      */
-    public void init(DynamicResourcePack pack, JSONObject remote) {
+    public void init(DynamicResourcePack pack, JsonObject remote) {
         this.parent = pack;
         this.cachedCurrentJson = pack.getCurrentJson();
 
         if (remote.has("project_id")) {
-            this.projectId = remote.getString("project_id");
+            this.projectId = JsonUtils.getString(remote, "project_id");
         } else {
-            this.projectId = remote.getString("modrinth_project_id");
+            this.projectId = JsonUtils.getString(remote, "modrinth_project_id");
         }
 
-        var ver = remote.optString("game_version", "no_specify");
+        var ver = JsonUtils.optString(remote, "game_version", "no_specify");
         this.usesCurrentGameVersion = ver.equalsIgnoreCase("current");
         this.noSpecifyGameVersion = ver.equalsIgnoreCase("no_specify");
         this.gameVersion = usesCurrentGameVersion ? DynamicPackMod.INSTANCE.getCurrentGameVersion() : ver;
@@ -57,11 +57,11 @@ public class ModrinthRemote extends Remote {
     public SyncBuilder syncBuilder() {
         return new SyncBuilder() {
             private LatestModrinthVersion latest;
-            private JSONObject latestJson;
+            private JsonObject latestJson;
             private long downloaded;
 
             @Override
-            public void init() throws Exception {
+            public void init(boolean ignoreCaches) throws Exception {
                 latestJson = parseModrinthLatestVersionJson();
                 latest = LatestModrinthVersion.ofJson(latestJson);
             }
@@ -118,11 +118,11 @@ public class ModrinthRemote extends Remote {
                 }
 
                 progress.setPhase("Updating metadata...");
-                cachedCurrentJson.put("version", latest.id);
+                cachedCurrentJson.addProperty("version", latest.id);
                 cachedCurrentJson.remove("version_number");
                 parent.updateJsonLatestUpdate();
 
-                PackUtil.openPackFileSystem(tempFile, path -> PathsUtil.nioWriteText(path.resolve(SharedConstrains.CLIENT_FILE), parent.getPackJson().toString(2)));
+                parent.saveClientFile(tempFile.toPath());
 
                 if (parent.isZip()) {
                     progress.setPhase("Move files...");
@@ -135,6 +135,8 @@ public class ModrinthRemote extends Remote {
                     PathsUtil.delete(tempFile.toPath());
                 }
 
+                progress.setPhase("Saving dynamicmcpack.json");
+                parent.saveClientFile();
                 progress.setPhase("Success");
                 return true;
             }
@@ -143,11 +145,11 @@ public class ModrinthRemote extends Remote {
 
 
     public String getCurrentUnique() {
-        return cachedCurrentJson.optString("version", "");
+        return JsonUtils.optString(cachedCurrentJson, "version", "");
     }
 
     public String getCurrentVersionNumber() {
-        return cachedCurrentJson.optString("version_number", "");
+        return JsonUtils.optString(cachedCurrentJson, "version_number", "");
     }
 
     public String getApiVersionsUrl() {
@@ -162,19 +164,20 @@ public class ModrinthRemote extends Remote {
         return usesCurrentGameVersion;
     }
 
-    public JSONObject parseModrinthLatestVersionJson() throws IOException {
+    public JsonObject parseModrinthLatestVersionJson() throws IOException {
         String content = Urls.parseTextContent(getApiVersionsUrl(), SharedConstrains.MOD_MODTINTH_API_LIMIT);
         Out.println(content);
-        JSONArray versions = new JSONArray(content);
-        for (Object o : versions) {
-            JSONObject version = (JSONObject) o;
+        JsonArray versions = JsonUtils.arrayFromString(content);
+        for (JsonElement o : versions) {
+            JsonObject version = (JsonObject) o;
             if (noSpecifyGameVersion) {
                 return version;
             }
 
-            JSONArray gameVersions = version.getJSONArray("game_versions");
+            JsonArray gameVersions = JsonUtils.getJsonArray(version, "game_versions");
             boolean supportGameVersion = false;
-            for (Object gameVersion : gameVersions) {
+            for (JsonElement jsonGameVersion : gameVersions) {
+                String gameVersion = jsonGameVersion.getAsString();
                 if (this.gameVersion.equals(gameVersion)) {
                     supportGameVersion = true;
                     break;
@@ -190,22 +193,23 @@ public class ModrinthRemote extends Remote {
 
     @Override
     public boolean checkUpdateAvailable() throws IOException {
-        JSONObject latest = parseModrinthLatestVersionJson();
+        JsonObject latest = parseModrinthLatestVersionJson();
         return _isUpdateAvailable(latest);
     }
 
-    private boolean _isUpdateAvailable(JSONObject latest) {
+    private boolean _isUpdateAvailable(JsonObject latest) {
         if (latest == null) {
             Out.warn("Latest version of " + parent.getLocation().getName() + " not available for this game_version");
             return false;
         }
-        if (latest.optString("version_number", "").equals(getCurrentVersionNumber())) {
+        if (JsonUtils.optString(latest, "version_number", "").equals(getCurrentVersionNumber())) {
             Out.debug("Version number equal. Update not available");
             return false;
         }
-        Out.debug("Version remote.id="+latest.getString("id") + "; current=" + getCurrentUnique());
+        var id = JsonUtils.getString(latest, "id");
+        Out.debug("Version remote.id="+id + "; current=" + getCurrentUnique());
 
-        return !getCurrentUnique().equals(latest.getString("id"));
+        return !getCurrentUnique().equals(id);
     }
 
 
@@ -235,18 +239,18 @@ public class ModrinthRemote extends Remote {
          * Create object from version json segment
          * @param latest json
          */
-        public static LatestModrinthVersion ofJson(JSONObject latest) {
-            String latestId = latest.getString("id");
-            String latestVersionNumber = latest.getString("version_number");
+        public static LatestModrinthVersion ofJson(JsonObject latest) {
+            String latestId = JsonUtils.getString(latest, "id");
+            String latestVersionNumber = JsonUtils.getString(latest, "version_number");
 
-            JSONArray files = latest.getJSONArray("files");
+            JsonArray files = JsonUtils.getJsonArray(latest, "files");
             int i = 0;
-            while (i < files.length()) {
-                var file = files.getJSONObject(i);
-                if (file.getBoolean("primary")) {
-                    String url = file.getString("url");
-                    int size = file.getInt("size");
-                    String hash = file.getJSONObject("hashes").getString("sha1");
+            while (i < files.size()) {
+                var file = (JsonObject) files.get(i);
+                if (JsonUtils.getBoolean(file, "primary")) {
+                    String url = JsonUtils.getString(file, "url");
+                    int size = JsonUtils.getInt(file, "size");
+                    String hash = JsonUtils.getString(file.getAsJsonObject("hashes"), "sha1");
                     return new LatestModrinthVersion(latestId, latestVersionNumber, url, hash, size);
                 }
                 i++;

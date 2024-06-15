@@ -8,7 +8,7 @@ public abstract class SyncBuilder {
     /**
      * Initialize a SyncBuilder, cache updateAvailable status, update size, etc...
      */
-    public abstract void init() throws Exception;
+    public abstract void init(boolean ignoreCaches) throws Exception;
 
     /**
      * @return downloaded size

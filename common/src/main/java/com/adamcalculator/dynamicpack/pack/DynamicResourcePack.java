@@ -7,8 +7,8 @@ import com.adamcalculator.dynamicpack.sync.SyncBuilder;
 import com.adamcalculator.dynamicpack.sync.SyncingTask;
 import com.adamcalculator.dynamicpack.util.*;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.Nullable;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.function.Consumer;
 
 public class DynamicResourcePack extends AbstractPack {
     private final File location; // in resourcepack dir
-    private final JSONObject cachedJson; // java-json of dynamicmcpack.json
+    private final JsonObject cachedJson; // java-json of dynamicmcpack.json
     private final Remote remote; // serialized remote block
     private final String remoteTypeStr;
 
@@ -30,13 +30,13 @@ public class DynamicResourcePack extends AbstractPack {
     private boolean destroyed = false; // destroyed
 
 
-    public DynamicResourcePack(File location, JSONObject json) {
+    public DynamicResourcePack(File location, JsonObject json) {
         this.location = location;
         this.cachedJson = json;
 
         try {
-            JSONObject remote = json.getJSONObject("remote");
-            this.remoteTypeStr = remote.getString("type");
+            JsonObject remote = json.getAsJsonObject("remote");
+            this.remoteTypeStr = JsonUtils.getString(remote, "type");
             this.remote = Remote.REMOTES.get(this.remoteTypeStr).get();
             this.remote.init(this, remote);
 
@@ -71,11 +71,11 @@ public class DynamicResourcePack extends AbstractPack {
             }
 
             @Override
-            public void init() {
+            public void init(boolean ignoreCaches) {
                 wrapThrowable(() -> {
                     checkNetwork();
                     builder = remote.syncBuilder();
-                    builder.init();
+                    builder.init(ignoreCaches);
                 });
             }
 
@@ -115,6 +115,22 @@ public class DynamicResourcePack extends AbstractPack {
                 }, false);
             }
         };
+    }
+
+    /**
+     * Don't run inside PackUtil.openPackFileSystem()!!! use method with argument
+     */
+    public void saveClientFile() {
+        try {
+            PackUtil.openPackFileSystem(getLocation(), this::saveClientFile);
+
+        } catch (Exception e) {
+            throw new RuntimeException("saveClientFile failed.", e);
+        }
+    }
+
+    public void saveClientFile(Path packRoot) {
+        PathsUtil.nioWriteText(packRoot.resolve(SharedConstrains.CLIENT_FILE), JsonUtils.toString(getPackJson()));
     }
 
     @Override
@@ -157,12 +173,12 @@ public class DynamicResourcePack extends AbstractPack {
         return location.getName();
     }
 
-    public JSONObject getPackJson() {
+    public JsonObject getPackJson() {
         return cachedJson;
     }
 
-    public JSONObject getCurrentJson() {
-        return cachedJson.getJSONObject("current");
+    public JsonObject getCurrentJson() {
+        return cachedJson.getAsJsonObject("current");
     }
 
     public String getRemoteType() {
@@ -170,7 +186,7 @@ public class DynamicResourcePack extends AbstractPack {
     }
 
     public void setLatestException(Exception e) {
-        Out.debug(this + ": latestException="+e);
+        debug(this + ": latestException="+e);
         this.latestException = e;
     }
 
@@ -180,7 +196,7 @@ public class DynamicResourcePack extends AbstractPack {
 
     public long getLatestUpdated() {
         try {
-            return cachedJson.getJSONObject("current").getLong("latest_updated");
+            return cachedJson.getAsJsonObject("current").get("latest_updated").getAsLong();
 
         } catch (Exception e) {
             return -1;
@@ -188,7 +204,7 @@ public class DynamicResourcePack extends AbstractPack {
     }
 
     public void updateJsonLatestUpdate() {
-        cachedJson.getJSONObject("current").put("latest_updated", System.currentTimeMillis() / 1000);
+        cachedJson.getAsJsonObject("current").addProperty("latest_updated", System.currentTimeMillis() / 1000);
     }
 
     public boolean checkIsUpdateAvailable() throws IOException {
@@ -257,4 +273,11 @@ public class DynamicResourcePack extends AbstractPack {
         this.destroyed = true;
     }
 
+
+
+    private void debug(String s) {
+        if (SharedConstrains.DEBUG) {
+            Out.debug("{%s} %s".formatted(getName(), s));
+        }
+    }
 }

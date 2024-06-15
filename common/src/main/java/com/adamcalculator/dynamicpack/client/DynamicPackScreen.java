@@ -1,9 +1,11 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.sync.SyncingTask;
+import com.adamcalculator.dynamicpack.util.NetworkStat;
 import com.adamcalculator.dynamicpack.util.TranslatableException;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -15,6 +17,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.Date;
 import java.util.function.Consumer;
 
@@ -52,7 +55,7 @@ public class DynamicPackScreen extends Screen {
         Compat.drawString(context, this.font, this.title, 20, 8, 16777215);
         Compat.drawString(context, this.font, screenDescText, 20, 20 + h, 16777215);
         Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.remote_type", pack.getRemoteType()), 20, 36 + h, 16777215);
-        Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
+
 
         if (pack.getLatestException() != null) {
             Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.latestException", TranslatableException.getComponentFromException(pack.getLatestException())).getString(512), 20, 78 + h, width - 40, 99, 0xff2222);
@@ -61,7 +64,13 @@ public class DynamicPackScreen extends Screen {
 
         if (SyncingTask.isSyncing()) {
             Compat.drawWrappedString(context, SyncingTask.getLogs(), 20, 78+30 + h, 500, 99, 0xCCCCCC);
+            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta)).getString(512), 20, 52 + h, width, 2, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
+
+        } else {
+            Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
         }
+
+
 
         super.render(context, mouseX, mouseY, delta);
     }

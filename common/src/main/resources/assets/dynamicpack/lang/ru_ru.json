@@ -34,5 +34,7 @@
   "dynamicpack.screen.pack_contents.state.true": "§aВключено",
   "dynamicpack.screen.pack_contents.state.false": "§cОтключено",
   "dynamicpack.screen.pack_contents.state.default.true": "По умолчанию §a(вкл)",
-  "dynamicpack.screen.pack_contents.state.default.false": "По умолчанию §c(выкл)"
+  "dynamicpack.screen.pack_contents.state.default.false": "По умолчанию §c(выкл)",
+  "dynamicpack.screen.pack.updateStat": "Скорость: %s\nОсталось: %s"
+
 }

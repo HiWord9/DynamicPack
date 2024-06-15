@@ -82,17 +82,14 @@ sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
     // Forge not working... If you may fix forge, I'll hug you
-    implementation("org.json:json:20231013")
     implementation("net.lingala.zip4j:zip4j:2.11.5")
 
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
     compileOnly project(":common")
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 
-    minecraftEmbed 'org.json:json:[20231013]'
     minecraftEmbed "net.lingala.zip4j:zip4j:[2.11.5]"
 
-    minecraftLibrary 'org.json:json:[20231013]'
     minecraftLibrary "net.lingala.zip4j:zip4j:[2.11.5]"
 }
 

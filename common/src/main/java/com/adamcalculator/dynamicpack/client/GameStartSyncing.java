@@ -35,11 +35,12 @@ public class GameStartSyncing extends Thread {
         updateStartTime = System.currentTimeMillis();
         Out.debug("[GameStartSyncing] thread started");
 
-        SyncingTask syncingTask = new SyncingTask();
         SyncingTask.launchTaskAsSyncing(() -> {
             try {
                 StatusChecker.check(); // <-- don't forget check a status
-                syncBuilder = syncingTask.rootSyncBuilder();
+                syncBuilder = SyncingTask.rootSyncBuilder();
+                syncBuilder.init(false);
+
                 if (syncBuilder.isUpdateAvailable()) {
                     boolean reloadRequired = syncBuilder.doUpdate(createSyncProgress());
                     if (!lockResourcesLoading && reloadRequired) {
@@ -59,6 +60,7 @@ public class GameStartSyncing extends Thread {
             @Override
             public void setPhase(String phase) {
                 Out.debug("Phase: " + phase);
+                SyncingTask.log(phase);
             }
 
             @Override
@@ -70,8 +72,8 @@ public class GameStartSyncing extends Thread {
                 }
 
                 // if locked and updating > 5 seconds
-                if (updateTime() > 1000 * 5 && isLocked()) {
-                    boolean unlock = eta > (untilForceUnlock() / 1.5f);
+                if (updateTime() > 1000 * 3 && isLocked()) {
+                    boolean unlock = eta*1000 > (untilForceUnlock() / 1.5f);
 
                     if (unlock) {
                         Out.debug("[GameStartSyncing] ETA " + eta + "s. Unlocking main thread...");
@@ -83,6 +85,7 @@ public class GameStartSyncing extends Thread {
             @Override
             public void deleted(Path name) {
                 Out.debug("Deleted: " + name);
+                SyncingTask.log("Delete: " + name.getFileName().toString());
             }
         };
     }

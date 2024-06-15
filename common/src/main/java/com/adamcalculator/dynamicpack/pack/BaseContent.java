@@ -3,20 +3,26 @@ package com.adamcalculator.dynamicpack.pack;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 
 public class BaseContent {
-    private final DynamicRepoRemote parent;
+    private final DynamicRepoRemote parentRemote;
     private final String id;
     private final boolean required;
     private OverrideType overrideType;
     private final String name;
-    private final boolean defaultStatus;
 
-    public BaseContent(DynamicRepoRemote parent, String id, boolean required, OverrideType overrideType, String name, boolean defaultStatus) {
-        this.parent = parent;
+    // BREAKING CHANGES!
+    // since 1.0.31 ignoring requied key.
+    //
+    private final boolean defaultStatus;
+    private final boolean hidden;
+
+    public BaseContent(DynamicRepoRemote parentRemote, String id, boolean required, OverrideType overrideType, String name, boolean defaultStatus, boolean hidden) {
+        this.parentRemote = parentRemote;
         this.id = id;
         this.required = required;
         this.overrideType = overrideType;
         this.name = name;
         this.defaultStatus = defaultStatus;
+        this.hidden = hidden;
     }
 
     public String getId() {
@@ -43,8 +49,12 @@ public class BaseContent {
         return name;
     }
 
+    public boolean isHidden() {
+        return hidden;
+    }
+
     public void setOverrideType(OverrideType overrideType) throws Exception {
         this.overrideType = overrideType;
-        parent.setContentOverride(this, overrideType);
+        parentRemote.getPreferences().setContentOverride(this, overrideType);
     }
 }

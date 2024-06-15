@@ -1,10 +1,7 @@
 package com.adamcalculator.dynamicpack;
 
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
-import com.adamcalculator.dynamicpack.util.FailedOpenPackFileSystemException;
-import com.adamcalculator.dynamicpack.util.Out;
-import com.adamcalculator.dynamicpack.util.PackUtil;
-import com.adamcalculator.dynamicpack.util.PathsUtil;
+import com.adamcalculator.dynamicpack.util.*;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -85,8 +82,8 @@ public class PacksContainer {
     }
 
     private void processPack(File location, Path clientFile) throws Exception {
-        var json = PathsUtil.readJson(clientFile);
-        long formatVersion = json.getLong("formatVersion");
+        var json = JsonUtils.readJson(clientFile);
+        long formatVersion = JsonUtils.optInt(json, "formatVersion");
         DynamicResourcePack oldestPack = packs.getOrDefault(location.getName(), null);
         if (formatVersion == 1) {
             var pack = new DynamicResourcePack(location, json);

@@ -1,9 +1,9 @@
 package com.adamcalculator.dynamicpack.util;
 
+import com.adamcalculator.dynamicpack.SharedConstrains;
 import net.lingala.zip4j.ZipFile;
 import net.lingala.zip4j.model.UnzipParameters;
 import org.apache.commons.io.FileUtils;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardOpenOption;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Stream;
 
@@ -52,12 +53,30 @@ public class PathsUtil {
      * @param zipFilePath file.zip
      * @param dir for example /resourcepacks/Pack1/
      */
-    public static void unzip(File zipFilePath, File dir) throws IOException {
-        UnzipParameters unzipParameters = new UnzipParameters();
-        unzipParameters.setExtractSymbolicLinks(false);
-        ZipFile zip = new ZipFile(zipFilePath);
-        zip.extractAll(dir.getPath(), unzipParameters);
-        zip.close();
+    public static void unzip(File zipFilePath, File dir) throws Exception {
+        if (SharedConstrains.USE_ZIP4J_FOR_UNZIP) {
+            UnzipParameters unzipParameters = new UnzipParameters();
+            unzipParameters.setExtractSymbolicLinks(false);
+            ZipFile zip = new ZipFile(zipFilePath);
+            zip.extractAll(dir.getPath(), unzipParameters);
+            zip.close();
+
+        } else {
+            // untested code
+            PackUtil.openPackFileSystem(zipFilePath, zip -> {
+                Set<String> buffer = new HashSet<>();
+                walkScan(buffer, zip);
+
+                for (String relative : buffer) {
+                    Path path = zip.resolve(relative);
+                    Path toPath = dir.toPath().resolve(relative);
+
+                    createDirsToFile(toPath);
+
+                    Files.copy(path, toPath, StandardCopyOption.REPLACE_EXISTING);
+                }
+            });
+        }
     }
 
 
@@ -80,9 +99,7 @@ public class PathsUtil {
 
     private static boolean _nioIsDirExistsAndEmpty(Path path) throws IOException {
         if (Files.isDirectory(path)) {
-            try (Stream<Path> entries = Files.list(path)) {
-                return entries.findFirst().isEmpty();
-            }
+            return Files.list(path).count() == 0;
         }
 
         return false;
@@ -139,7 +156,7 @@ public class PathsUtil {
     public static void createDirsToFile(Path path) throws IOException {
         Path parent = path.getParent();
         if (parent != null && !Files.exists(parent)) {
-            Files.createDirectories(path);
+            Files.createDirectories(parent);
         }
     }
 
@@ -157,7 +174,7 @@ public class PathsUtil {
         try (Stream<Path> entries = Files.walk(path, Integer.MAX_VALUE)) {
             entries.forEach(path1 -> {
                 if (!Files.isDirectory(path1)) {
-                    buffer.add(path1.toString());
+                    buffer.add(path.relativize(path1).toString());
                 }
             });
         } catch (Exception e) {
@@ -173,17 +190,9 @@ public class PathsUtil {
         return false;
     }
 
-    public static JSONObject readJson(InputStream inputStream) throws IOException {
-        return new JSONObject(readString(inputStream));
-    }
-
     public static String readString(InputStream inputStream) throws IOException {
         byte[] bytes = inputStream.readAllBytes();
         return new String(bytes, StandardCharsets.UTF_8);
-    }
-
-    public static JSONObject readJson(Path path) throws IOException {
-        return new JSONObject(readString(path));
     }
 
     public static String readString(Path path) throws IOException {

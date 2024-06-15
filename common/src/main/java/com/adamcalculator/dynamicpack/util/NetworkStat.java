@@ -7,7 +7,7 @@ import java.io.IOException;
 public class NetworkStat {
     public static final long MAGIC_NO_STATISTIC = -1;
 
-    private static final LoopLog _debugCallLoopLog = new LoopLog(250);
+    private static final LoopLog _debugCallLoopLog = new LoopLog(1000);
     private static long millis;
     private static long bytes;
 

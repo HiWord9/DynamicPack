@@ -3,6 +3,7 @@ package com.adamcalculator.dynamicpack.client;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
+import com.adamcalculator.dynamicpack.sync.SyncThread;
 import com.adamcalculator.dynamicpack.util.Out;
 import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
@@ -86,13 +87,8 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
 
     @Override
     public void startManuallySync() {
-        Thread thread = new Thread(() -> {
-//            createSyncTask(true).run();
-            Out.println("Haha debug!");
-            // TODO here you break.. may sync is only clicked pack?
-        });
-        thread.setName("DynamicPack-ManuallySyncThread" + (DynamicPackMod.manuallySyncThreadCounter++));
-        thread.start();
+        SyncThread syncThread = new SyncThread("SyncThread-"+(DynamicPackMod.manuallySyncThreadCounter++));
+        syncThread.start();
     }
 
     @Override

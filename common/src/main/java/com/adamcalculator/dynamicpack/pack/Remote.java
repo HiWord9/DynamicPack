@@ -2,7 +2,7 @@ package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -29,7 +29,7 @@ public abstract class Remote {
      * @param pack parent
      * @param remote root.remote
      */
-    public abstract void init(DynamicResourcePack pack, JSONObject remote);
+    public abstract void init(DynamicResourcePack pack, JsonObject remote);
 
     public abstract SyncBuilder syncBuilder();
 

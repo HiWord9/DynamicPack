@@ -67,50 +67,48 @@ public class SyncingTask {
         return isSyncing;
     }
 
-    public SyncingTask() {
+    private SyncingTask() {
     }
 
 
-    public SyncBuilder rootSyncBuilder() throws Exception {
-        Set<SyncBuilder> set = new HashSet<>();
-        long totalSize = 0;
-        boolean updateAvailable = false;
-        for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
-            var builder = pack.syncBuilder();
-            builder.init();
-            set.add(builder);
-
-            totalSize += builder.getUpdateSize();
-            if (builder.isUpdateAvailable()) {
-                updateAvailable = true;
-            }
-        }
-
-        Out.debug("[SyncingTask] rootSyncBuilder() totalSize=" + totalSize + " updateAvailable=" + updateAvailable);
-
-
-        final boolean finalUpdateAvailable = updateAvailable;
-        final long finalTotalSize = totalSize;
+    public static SyncBuilder rootSyncBuilder() throws Exception {
         return new SyncBuilder() {
+            private final Set<SyncBuilder> builders = new HashSet<>();
+            private boolean updateAvailable;
+            private long totalSize;
+
+
             @Override
-            public void init() throws Exception {
-                // do nothing here!!!
+            public void init(boolean ignoreCaches) throws Exception {
+                for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
+                    var builder = pack.syncBuilder();
+                    builder.init(ignoreCaches);
+                    builders.add(builder);
+
+                    totalSize += builder.getUpdateSize();
+                    if (builder.isUpdateAvailable()) {
+                        updateAvailable = true;
+                    }
+                }
+
+                Out.debug("[SyncingTask] rootSyncBuilder() totalSize=" + totalSize + " updateAvailable=" + updateAvailable);
+
             }
 
             @Override
             public boolean isUpdateAvailable() {
-                return finalUpdateAvailable;
+                return updateAvailable;
             }
 
             @Override
             public long getUpdateSize() {
-                return finalTotalSize;
+                return totalSize;
             }
 
             @Override
             public long getDownloadedSize() {
                 long updated = 0;
-                for (SyncBuilder syncBuilder : set) {
+                for (SyncBuilder syncBuilder : builders) {
                     updated += syncBuilder.getDownloadedSize();
                 }
                 return updated;
@@ -119,7 +117,7 @@ public class SyncingTask {
             @Override
             public boolean doUpdate(SyncProgress progress) throws Exception {
                 boolean reload = false;
-                for (SyncBuilder syncBuilder : set) {
+                for (SyncBuilder syncBuilder : builders) {
                     if (syncBuilder.isUpdateAvailable()) {
                         boolean rel = syncBuilder.doUpdate(progress);
                         if (rel) {

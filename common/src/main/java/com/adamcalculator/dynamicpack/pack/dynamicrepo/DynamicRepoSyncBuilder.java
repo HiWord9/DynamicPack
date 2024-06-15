@@ -7,22 +7,22 @@ import com.adamcalculator.dynamicpack.sync.SyncBuilder;
 import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.SyncProgress;
 import com.adamcalculator.dynamicpack.util.*;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
+import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class DynamicRepoSyncBuilder extends SyncBuilder {
-    private static ExecutorService executor;
+    private static int DOWNLOAD_THREADS_COUNT = 8;
+    private static int executorCounter = 0;
 
     private final DynamicResourcePack pack;
     private final DynamicRepoRemote remote;
@@ -33,7 +33,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     private boolean updateAvailable;
     private long updateSize;
     private long downloadedSize;
-    private JSONObject repoJson; // remote repo json (dynamicmcpack.repo.json)
+    private JsonObject repoJson; // remote repo json (dynamicmcpack.repo.json)
 
     private boolean isReloadRequired;
 
@@ -44,29 +44,41 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
 
 
     @Override
-    public void init() throws Exception {
-        updateAvailable = remote.checkUpdateAvailable();
+    public void init(boolean ignoreCaches) throws Exception {
+        // == about ignoreCaches ==
+        // Triggers a full re-check dynamic_repo because user
+        // may a change contents in ContentScreen.
+        updateAvailable = ignoreCaches || remote.checkUpdateAvailable();
+
+
         if (updateAvailable) {
             String packUrlContent = Urls.parseTextContent(remote.getPackUrl(), SharedConstrains.MOD_FILES_LIMIT, null);
-            repoJson = new JSONObject(packUrlContent);
+            repoJson = JsonUtils.fromString(packUrlContent);
             long formatVersion;
-            if ((formatVersion = repoJson.getLong("formatVersion")) != 1) {
+            if ((formatVersion = JsonUtils.getLong(repoJson, "formatVersion")) != 1) {
                 throw new RuntimeException("Incompatible formatVersion: " + formatVersion);
             }
 
             long minBuildForWork;
-            if ((minBuildForWork = repoJson.optLong("minimal_mod_build", SharedConstrains.VERSION_BUILD)) > SharedConstrains.VERSION_BUILD) {
+            if ((minBuildForWork = JsonUtils.optLong(repoJson, "minimal_mod_build", SharedConstrains.VERSION_BUILD)) > SharedConstrains.VERSION_BUILD) {
                 throw new RuntimeException("Incompatible DynamicPack Mod version for this pack: required minimal_mod_build=" + minBuildForWork + ", but currently mod build is " + SharedConstrains.VERSION_BUILD);
             }
 
-            String remoteName = repoJson.getString("name");
+            String remoteName = JsonUtils.getString(repoJson, "name");
             if (!InputValidator.isDynamicPackNameValid(remoteName)) {
                 throw new RuntimeException("Remote name of pack not valid.");
             }
 
-            for (JSONObject jsonContent : calcActiveContents()) {
+            // init oldestFilesList before init contents
+            PackUtil.openPackFileSystem(pack.getLocation(), packFileSystem -> PathsUtil.walkScan(oldestFilesList, packFileSystem));
+
+            // init all active contents
+            for (JsonObject jsonContent : calcActiveContents()) {
                 processContentInit(jsonContent);
             }
+
+            // notify DynamicPackRemote about actual repoJson
+            remote.notifyNewRemoteJson(repoJson);
         }
     }
 
@@ -79,11 +91,9 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     public boolean doUpdate(SyncProgress progress) throws Exception {
         progress.setPhase("Opening a pack file-system");
         PackUtil.openPackFileSystem(pack.getLocation(), packFileSystem -> {
-            PathsUtil.walkScan(oldestFilesList, packFileSystem);
-
-
             internalProcessDynamicFiles(progress, packFileSystem);
 
+            debug("DELETE LIST: " + oldestFilesList);
             if (!doNotDeleteOldestFiles) {
                 progress.setPhase("Deleting unnecessary files");
                 for (String s : oldestFilesList) {
@@ -92,20 +102,16 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
                     if (fileName.equalsIgnoreCase(SharedConstrains.CLIENT_FILE)) {
                         continue;
                     }
-
-                    progress.deleted(packFileSystem);
+                    progress.deleted(pathToFile);
                     PathsUtil.nioSmartDelete(pathToFile);
                     markReloadRequired();
                 }
             }
 
             progress.setPhase("Updating metadata...");
-            remote.updateCurrentKnownContents(repoJson.getJSONArray("contents"));
-            remote.parent.getPackJson().getJSONObject("current").put("build", repoJson.getLong("build"));
-            remote.parent.updateJsonLatestUpdate();
-
-            PathsUtil.nioWriteText(packFileSystem.resolve(SharedConstrains.CLIENT_FILE), pack.getPackJson().toString(SharedConstrains.JSON_INDENTS));
-
+            pack.getPackJson().getAsJsonObject("current").addProperty("build", JsonUtils.getLong(repoJson, "build"));
+            pack.updateJsonLatestUpdate();
+            pack.saveClientFile(packFileSystem);
         });
         progress.setPhase("Success");
         return isReloadRequired();
@@ -121,19 +127,17 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         return updateSize;
     }
 
-    private void processContentInit(JSONObject jsonContentD1) throws Exception {
+    private void processContentInit(JsonObject jsonContentD1) throws Exception {
         // dynamicmcpack.repo.json["contents"][*jsonContent*]
-        var id = jsonContentD1.getString("id");
+        var id = JsonUtils.getString(jsonContentD1, "id");
         InputValidator.throwIsContentIdInvalid(id);
-        var url = jsonContentD1.getString("url");
-        var urlCompressed = jsonContentD1.optString("url_compressed", null);
+        var url = JsonUtils.getString(jsonContentD1, "url");
+        var urlCompressed = JsonUtils.optString(jsonContentD1, "url_compressed", null);
         boolean compressSupported = urlCompressed != null;
 
         checkPathSafety(url);
 
-        var hash = jsonContentD1.getString("hash");
-        var localHash = remote.getCurrentPackContentHash(id);
-        Out.debug("[DynamicRepoSyncBuilder] id=" + id + " localHash == hash: " + Objects.equals(localHash, hash));
+        var hash = JsonUtils.getString(jsonContentD1, "hash");
 
         url = remote.getUrl() + "/" + url;
         if (compressSupported) {
@@ -148,17 +152,17 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         }
 
         // content.json
-        JSONObject jsonContentD2 = new JSONObject(content);
+        JsonObject jsonContentD2 = JsonUtils.fromString(content);
         PackUtil.openPackFileSystem(remote.parent.getLocation(), (packFileSystem) -> {
             long formatVersion;
-            if ((formatVersion = jsonContentD2.getLong("formatVersion")) != 1) {
+            if ((formatVersion = JsonUtils.getLong(jsonContentD2, "formatVersion")) != 1) {
                 throw new RuntimeException("Incompatible formatVersion: " + formatVersion);
             }
 
-            JSONObject c = jsonContentD2.getJSONObject("content");
-            String par = c.optString("parent", "");
-            String rem = c.optString("remote_parent", "");
-            JSONObject files = c.getJSONObject("files");
+            JsonObject c = jsonContentD2.getAsJsonObject("content");
+            String par = JsonUtils.optString(c, "parent", "");
+            String rem = JsonUtils.optString(c, "remote_parent", "");
+            JsonObject files = c.getAsJsonObject("files");
 
             int processedFiles = 0;
             for (final String _relativePath : files.keySet()) {
@@ -182,13 +186,16 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
                     var fileRemoteUrl = getUrlFromPathAndCheck(rem, path);
 
                     // JSON-entry of file {"hash": "*hash*", "size": 1234"}
-                    JSONObject fileExtra = files.getJSONObject(_relativePath);
-                    String fileHash = fileExtra.getString("hash");
-                    int fileSize = fileExtra.optInt("size", Integer.MAX_VALUE);
+                    JsonObject fileExtra = files.getAsJsonObject(_relativePath);
+                    String fileHash = JsonUtils.getString(fileExtra, "hash");
+                    int fileSize = JsonUtils.optInt(fileExtra, "size", Integer.MAX_VALUE);
                     if (!InputValidator.isHashValid(fileHash)) {
                         Out.warn("Hash not valid for file Example: \"file/path\": {\"hash\": \"not valid here\"}" + path);
                         continue;
                     }
+
+                    // the file continues to exist
+                    oldestFilesList.remove(path);
 
                     boolean isNeedOverwrite = false;
                     if (Files.exists(filePath)) {
@@ -220,19 +227,33 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         });
     }
 
-    private void internalProcessDynamicFiles(SyncProgress progress, Path packFileSystem) {
-        NetworkStat.speedMultiplier = 10;
+    private void internalProcessDynamicFiles(SyncProgress progress, Path packFileSystem) throws Exception {
+        debug("internalProcessDynamicFiles begin");
+        NetworkStat.speedMultiplier = DOWNLOAD_THREADS_COUNT;
+        Path tempPath;
+        if (pack.isZip()) {
+            tempPath = new File(System.getProperty("java.io.tmpdir") + "/minecraft/mods/dynamicpack/temp/" + pack.getName()).toPath();
+            if (!Files.exists(tempPath)) {
+                PathsUtil.createDirsToFile(tempPath);
+                Files.createDirectory(tempPath);
+            }
+        } else {
+            tempPath = null;
+        }
+
+
+        ExecutorService executor = getExecutor();
         CompletableFuture.supplyAsync(dynamicFiles::values).thenCompose(dynamicFiles -> {
             List<CompletableFuture<DynamicFile>> downloadedFiles = dynamicFiles.stream()
                     .map(file -> {
                         var s = CompletableFuture.supplyAsync(() -> {
                             try {
-                                downloadFile(packFileSystem, file, progress);
+                                downloadFile((tempPath != null ? tempPath : packFileSystem), file, progress);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                             return file;
-                        }, getExecutor()).exceptionally(th -> {
+                        }, executor).exceptionally(th -> {
                             Out.error("Error while download a file", th);
                             return null;
                         });
@@ -247,7 +268,26 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         }).whenComplete((files, th) -> {
             if (th == null) {
                 for (DynamicFile file : files) {
-                    oldestFilesList.remove(file.getPath());
+                    if (file == null) {
+                        Out.warn("DynamicFile null in whenComplete...");
+                        continue;
+                    }
+                    markReloadRequired();
+
+                    if (tempPath != null) {
+                        try {
+                            Path dest = packFileSystem.resolve(file.getPath());
+                            Path source = file.getDownloadedPath();
+
+                            PathsUtil.createDirsToFile(dest);
+
+                            Files.move(source, dest, StandardCopyOption.REPLACE_EXISTING);
+                            PathsUtil.nioSmartDelete(source);
+
+                        } catch (Exception e) {
+                            Out.error("Error while moving file " + file.getPath() + " from temp", e);
+                        }
+                    }
                 }
 
             } else {
@@ -255,6 +295,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
             }
         }).toCompletableFuture().join();
         NetworkStat.speedMultiplier = 1;
+        debug("internalProcessDynamicFiles end");
     }
 
     private void downloadFile(Path rootPath, DynamicFile dynamicFile, SyncProgress progress) throws Exception {
@@ -264,6 +305,15 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         if (filePath.getFileName().toString().contains(SharedConstrains.CLIENT_FILE)) {
             Out.warn("File " + SharedConstrains.CLIENT_FILE + " in pack " + pack.getName() + " can't be updated remotely!");
             return;
+        }
+
+        if (PathsUtil.isPathFileExists(filePath)) {
+            if (Hashes.sha1sum(filePath).equalsIgnoreCase(dynamicFile.getHash())) {
+                Out.warn("File " + dynamicFile.getPath() + " not downloaded(shadow): already exists with equals hashes!");
+                dynamicFile.setDownloadPath(filePath);
+                downloadedSize += Files.size(filePath);
+                return;
+            }
         }
 
         PackUtil.downloadPackFile(dynamicFile.getUrl(), filePath, dynamicFile.getHash(), new FileDownloadConsumer() {
@@ -277,22 +327,16 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
                 downloadedSize += fileSize;
             }
         });
-        dynamicFile.setTempPath(filePath);
-
-        markReloadRequired();
+        dynamicFile.setDownloadPath(filePath);
     }
 
     private ExecutorService getExecutor() {
-        if (executor != null) {
-            return executor;
-        }
-
-        return executor = Executors.newFixedThreadPool(10, new ThreadFactory() {
+        return Executors.newFixedThreadPool(DOWNLOAD_THREADS_COUNT, new ThreadFactory() {
             int count = 1;
 
             @Override
             public Thread newThread(@NotNull Runnable runnable) {
-                return new Thread(runnable, "DownloadWorker-" + count++);
+                return new Thread(runnable, "DownloadWorker"+(executorCounter++)+"-" + count++);
             }
         });
     }
@@ -326,18 +370,19 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     /**
      * @return active contents from repoJson
      */
-    private List<JSONObject> calcActiveContents() {
-        List<JSONObject> activeContents = new ArrayList<>();
-        JSONArray contents = repoJson.getJSONArray("contents");
+    private List<JsonObject> calcActiveContents() {
+        List<JsonObject> activeContents = new ArrayList<>();
+        JsonArray contents = repoJson.getAsJsonArray("contents");
         int i = 0;
-        while (i < contents.length()) {
-            var content = contents.getJSONObject(i);
-            var id = content.getString("id");
+        while (i < contents.size()) {
+            var content = contents.get(i).getAsJsonObject();
+            var id = JsonUtils.getString(content, "id");
             InputValidator.throwIsContentIdInvalid(id);
-            var defaultActive = content.optBoolean("default_active", true);
+            var defaultActive = JsonUtils.optBoolean(content, "default_active", true);
+            var required = JsonUtils.optBoolean(content, "required", false);
 
             // is active in settings or required
-            if (remote.isContentActive(id, defaultActive) || content.optBoolean("required", false)) {
+            if (required || remote.getPreferences().isContentActive(id, defaultActive)) {
                 activeContents.add(content);
             }
             i++;
@@ -351,8 +396,14 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
 
     private void markReloadRequired() {
         if (!isReloadRequired) {
-            Out.debug("Now reload is required in " + this);
+            debug("Now reload is required in " + this);
         }
         this.isReloadRequired = true;
+    }
+
+    private void debug(String s) {
+        if (SharedConstrains.DEBUG) {
+            Out.debug("{%s} %s".formatted(pack.getName(), s));
+        }
     }
 }

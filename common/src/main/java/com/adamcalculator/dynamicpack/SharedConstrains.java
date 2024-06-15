@@ -1,6 +1,8 @@
 package com.adamcalculator.dynamicpack;
 
 import com.adamcalculator.dynamicpack.util.Out;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.io.IOException;
 import java.net.URI;
@@ -29,7 +31,8 @@ public class SharedConstrains {
 
     // Settings
     public static final int MAX_ATTEMPTS_TO_DOWNLOAD_FILE = 3;
-    public static final int JSON_INDENTS = 2;
+
+    public static final boolean USE_ZIP4J_FOR_UNZIP = false;
     public static int URLS_BUFFER_SIZE = 1024; // TODO: Add to config...
 
     // const
@@ -44,6 +47,8 @@ public class SharedConstrains {
                   }
                 }
                 """;
+
+    public static Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final Set<String> ALLOWED_HOSTS = new HashSet<>();
     static {
@@ -106,11 +111,26 @@ public class SharedConstrains {
     }
 
     public static String speedToString(long bytesPerSec) {
-        if (bytesPerSec >= 1024) {
+        if (bytesPerSec >= 1024 * 1024) {
+            return (bytesPerSec / 1024 / 1024) + " MiB/s";
+
+        } else if (bytesPerSec >= 1024) {
             return (bytesPerSec / 1024) + " KiB/s";
 
         } else  {
             return bytesPerSec + " B/s";
+        }
+    }
+
+    public static String secondsToString(long s) {
+        if (s > 3600) {
+            return (s / (3600)) + "h";
+
+        } else if (s > 60) {
+            return (s / 60) + "m";
+
+        } else {
+            return s + "s";
         }
     }
 

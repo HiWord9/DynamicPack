@@ -2,10 +2,11 @@ package com.adamcalculator.dynamicpack.status;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.util.JsonUtils;
 import com.adamcalculator.dynamicpack.util.Loader;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.adamcalculator.dynamicpack.util.Urls;
-import org.json.JSONObject;
+import com.google.gson.JsonObject;
 
 /**
  * Check status from developer.
@@ -20,16 +21,19 @@ public class StatusChecker {
     private static boolean isChecked = false;
 
     public static void check() {
-        Out.println("Checking status...");
+        if (isChecked) {
+            return;
+        }
 
+        Out.println("Checking status...");
         try {
             String s = Urls.parseTextContent(URL, 1024 * 512);
-            JSONObject j = new JSONObject(s);
+            JsonObject j = JsonUtils.fromString(s);
             String platformKey;
-            JSONObject lat = j.getJSONObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));
-            isUpdateAvailable = lat.getLong("build") > SharedConstrains.VERSION_BUILD;
-            isSafe = lat.getLong("safe") <= SharedConstrains.VERSION_BUILD;
-            isFormatActual = lat.getLong("format") <= SharedConstrains.VERSION_BUILD;
+            JsonObject lat = j.getAsJsonObject(platformKey = getLatestKeyForPlatform(DynamicPackMod.getLoader()));
+            isUpdateAvailable = JsonUtils.getLong(lat, "build") > SharedConstrains.VERSION_BUILD;
+            isSafe = JsonUtils.getLong(lat, "safe") <= SharedConstrains.VERSION_BUILD;
+            isFormatActual = JsonUtils.getLong(lat, "format") <= SharedConstrains.VERSION_BUILD;
 
             isChecked = true;
             Out.println(String.format("Status checked! platformKey=%s, isSafe=%s, isFormatActual=%s, isUpdateAvailable=%s", platformKey, isSafe, isFormatActual, isUpdateAvailable));

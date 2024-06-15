@@ -34,5 +34,6 @@
   "dynamicpack.screen.pack_contents.state.true": "§aEnabled",
   "dynamicpack.screen.pack_contents.state.false": "§cDisabled",
   "dynamicpack.screen.pack_contents.state.default.true": "Default §a(ON)",
-  "dynamicpack.screen.pack_contents.state.default.false": "Default §c(OFF)"
+  "dynamicpack.screen.pack_contents.state.default.false": "Default §c(OFF)",
+  "dynamicpack.screen.pack.updateStat": "Speed: %s\nETA: %s"
 }

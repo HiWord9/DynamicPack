@@ -37,7 +37,7 @@ public class ContentsScreen extends Screen {
         this.minecraft = Minecraft.getInstance();
         this.pack.addDestroyListener(onPackReSync);
 
-        for (BaseContent knownContent : ((DynamicRepoRemote) pack.getRemote()).getKnownContents()) {
+        for (BaseContent knownContent : ((DynamicRepoRemote) pack.getRemote()).getPreferences().getKnownContents()) {
             preChangeStates.put(knownContent, knownContent.getOverride());
         }
     }
