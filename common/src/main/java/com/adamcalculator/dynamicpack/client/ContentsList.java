@@ -74,9 +74,13 @@ public class ContentsList extends ContainerObjectSelectionList<ContentsList.Cont
         }
 
         private void clicked() {
-            content.nextOverride();
+            try {
+                content.nextOverride(parent.getBaseContents());
+            } catch (Exception e) {
+                Out.error("Error while content.nextOverride() in gui", e);
+            }
             parent.onAfterChange();
-            refresh();
+            refreshAll();
         }
 
 

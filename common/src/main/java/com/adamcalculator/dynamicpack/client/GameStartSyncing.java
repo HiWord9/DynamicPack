@@ -1,5 +1,6 @@
 package com.adamcalculator.dynamicpack.client;
 
+import com.adamcalculator.dynamicpack.Config;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
@@ -25,6 +26,10 @@ public class GameStartSyncing extends Thread {
 
     public GameStartSyncing() {
         setName("GameStartSyncingThread");
+        if (!Config.getInstance().isAutoUpdateAtLaunch()) {
+            Out.warn("Auto-update at launch disabled by config.");
+            unlock();
+        }
     }
 
     /**
@@ -32,6 +37,11 @@ public class GameStartSyncing extends Thread {
      */
     @Override
     public void run() {
+        if (!Config.getInstance().isAutoUpdateAtLaunch()) {
+            Out.warn("Thread launched with isAutoUpdateAtLaunch=false; return");
+            return;
+        }
+
         updateStartTime = System.currentTimeMillis();
         Out.debug("[GameStartSyncing] thread started");
 

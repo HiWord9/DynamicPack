@@ -17,6 +17,9 @@ public class Config {
     private int networkBufferSize = 1024;
     private int networkMultithreadDownloadThreads = 8;
     private boolean logAllFilesChanges = false;
+    private boolean autoUpdateAtLaunch = true;
+    private boolean updateOnlyEnabledPacks = true;
+    private boolean debugIgnoreHiddenFlagInContents = false;
 
 
     public static Config load() {
@@ -106,9 +109,12 @@ public class Config {
         updateStaticVariables(this);
     }
 
-    // TODO
     public boolean dynamicRepoIsIgnoreHiddenContentFlag() {
-        return SharedConstrains.DEBUG;
+        return debugIgnoreHiddenFlagInContents;
+    }
+
+    public void setDebugIgnoreHiddenFlagInContents(boolean debugIgnoreHiddenFlagInContents) {
+        this.debugIgnoreHiddenFlagInContents = debugIgnoreHiddenFlagInContents;
     }
 
     public void setLogAllFilesChanges(boolean logAllFilesChanges) {
@@ -118,5 +124,21 @@ public class Config {
 
     public boolean isLogAllFilesChanges() {
         return logAllFilesChanges;
+    }
+
+    public boolean isAutoUpdateAtLaunch() {
+        return autoUpdateAtLaunch;
+    }
+
+    public void setAutoUpdateAtLaunch(boolean autoUpdateAtLaunch) {
+        this.autoUpdateAtLaunch = autoUpdateAtLaunch;
+    }
+
+    public boolean isUpdateOnlyEnabledPacks() {
+        return updateOnlyEnabledPacks;
+    }
+
+    public void setUpdateOnlyEnabledPacks(boolean updateOnlyEnabledPacks) {
+        this.updateOnlyEnabledPacks = updateOnlyEnabledPacks;
     }
 }

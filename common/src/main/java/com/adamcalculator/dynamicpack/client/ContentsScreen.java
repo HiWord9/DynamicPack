@@ -65,7 +65,7 @@ public class ContentsScreen extends Screen {
     public void reset() {
         for (BaseContent knownContent : preChangeStates.keySet()) {
             OverrideType overrideType = preChangeStates.get(knownContent);
-            knownContent.setOverrideType(overrideType);
+            knownContent.setOverrideType(overrideType, getBaseContents());
         }
 
         contentsList.refreshAll();

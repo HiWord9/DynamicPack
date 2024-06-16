@@ -1,5 +1,6 @@
 package com.adamcalculator.dynamicpack.client;
 
+import com.adamcalculator.dynamicpack.Config;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
@@ -11,6 +12,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -69,20 +71,22 @@ public class DynamicPackScreen extends Screen {
 
         if (SyncingTask.isSyncing()) {
             Compat.drawWrappedString(context, SyncingTask.getLogs(), 20, 78+30 + h, 500, 99, 0xCCCCCC);
-            StringBuilder asciiPercentate = new StringBuilder();
+
+            StringBuilder asciiPercentage = new StringBuilder();
             int percentage = 0;
+
             try {
                 percentage = (int) ((float)SyncingTask.currentRootSyncBuilder.getDownloadedSize() / (float)SyncingTask.currentRootSyncBuilder.getUpdateSize() * 100f);
                 for (int i = 0; i < 25; i++) {
                     int i1 = percentage / 4;
                     if (i >= i1) {
-                        asciiPercentate.append("_");
+                        asciiPercentage.append("_");
                     } else {
-                        asciiPercentate.append("#");
+                        asciiPercentage.append("#");
                     }
                 }
             } catch (Exception ignored) {}
-            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta), percentage, "["+asciiPercentate+"]").getString(512), 20, 52 + h, width, 3, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
+            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta), percentage, "["+asciiPercentage+"]").getString(512), 20, 52 + h, width, 3, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
 
         } else {
             Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
@@ -126,6 +130,9 @@ public class DynamicPackScreen extends Screen {
                 },
                 48, 20, width - 120 + 54, 35
         ));
+        if (!DynamicPackMod.getInstance().isResourcePackActive(pack) && Config.getInstance().isUpdateOnlyEnabledPacks()) {
+            syncButtonAll.setTooltip(Tooltip.create(Component.translatable("dynamicpack.screen.pack.manually_sync.all.warningNotInclude")));
+        }
 
         hideSyncSpecButtons();
 

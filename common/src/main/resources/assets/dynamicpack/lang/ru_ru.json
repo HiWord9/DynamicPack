@@ -20,6 +20,7 @@
   "dynamicpack.screen.pack.manually_sync": "Синхр. вручную",
   "dynamicpack.screen.pack.manually_sync.this": "[Этот]",
   "dynamicpack.screen.pack.manually_sync.all": "[Все]",
+  "dynamicpack.screen.pack.manually_sync.all.warningNotInclude": "Учтите, этот пак не будет обновлён при нажатии этой кнопки поскольку в конфигурации включено обновление только включённых паков, но этот пак не включен.",
   "dynamicpack.screen.pack.dynamic.contents": "Контенты...",
   "dynamicpack.status_checker.not_safe": "Доступно обновление безопасности для мода DynamicPack! Это сообщение не стоит игнорировать, поскольку в обновлении были исправлены возможные уязвимости: %s",
   "dynamicpack.status_checker.not_safe.toast.title": "DynamicPack",
@@ -46,7 +47,20 @@
   "dynamicpack.screen.config.category.network.bufferSize.description": "Файлы загружаются небольшими частями. Если у вас высокая скорость интернета, вы можете увеличить размер части чтобы уменьшить нагрузку на процессор. Обратите внимание, что если вы сделаете размер больше среднего размера загружаемых файлов, большую часть времени буфер будет наполовину пуст, а это значит, что он будет тратить вашу оперативную память не эффективно.",
 
   "dynamicpack.screen.config.category.network.multithread.threads.name": "Количество потоков",
-  "dynamicpack.screen.config.category.network.multithread.threads.description": "В ресурспаках типа 'dynamic_repo' мод применяет мнопоточное скачивание. Эта настройка устанавливает количество потоков.\n\nУчтите, значения больше 10 не рекомендуются, поскольку сервис откуда скачиваются файлы может ограничивать максимальное количество подключений с одного айпи адреса.\n\nЕсли ваш интернет очень медленно инициализирует HTTPS соединение, но скачивание происходит быстрее, повышение этой настройки даст ощутимый буст."
+  "dynamicpack.screen.config.category.network.multithread.threads.description": "В ресурспаках типа 'dynamic_repo' мод применяет мнопоточное скачивание. Эта настройка устанавливает количество потоков.\n\nУчтите, значения больше 10 не рекомендуются, поскольку сервис откуда скачиваются файлы может ограничивать максимальное количество подключений с одного айпи адреса.\n\nЕсли ваш интернет очень медленно инициализирует HTTPS соединение, но скачивание происходит быстрее, повышение этой настройки даст ощутимый буст.",
+
+  "dynamicpack.screen.config.category.general": "Основное",
+  "dynamicpack.screen.config.category.general.isAutoUpdateAtLaunch": "Авто-обновление при запуске Minecraft",
+  "dynamicpack.screen.config.category.general.isAutoUpdateAtLaunch.description": "Мод в фоне будет запускать процесс авто-обновления для тех ресурспаков которые устарели. (Рекомендуется)",
+
+  "dynamicpack.screen.config.category.general.updateOnlyEnabledPacks": "Обновлять только актиные паки",
+  "dynamicpack.screen.config.category.general.updateOnlyEnabledPacks.description": "Обновлять только те паки, которые включены в игре.",
+
+
+  "dynamicpack.screen.config.category.debug": "Отладка",
+  "dynamicpack.screen.config.category.debug.description": "Очень не рекомендуется трогать что-либо в этой вкладке.",
+  "dynamicpack.screen.config.category.debug.logAllFilesChanges": "Логгировать все изменения файлов",
+  "dynamicpack.screen.config.category.debug.ignoreHidden": "Игнор флага 'hidden' в контентах"
 
 
 }

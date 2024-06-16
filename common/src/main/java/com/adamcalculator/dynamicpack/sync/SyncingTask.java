@@ -1,5 +1,6 @@
 package com.adamcalculator.dynamicpack.sync;
 
+import com.adamcalculator.dynamicpack.Config;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.util.Out;
@@ -84,6 +85,12 @@ public class SyncingTask {
                 clearLog();
 
                 for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
+                    if (Config.getInstance().isUpdateOnlyEnabledPacks()) {
+                        boolean enabled = DynamicPackMod.getInstance().isResourcePackActive(pack);
+                        if (!enabled) {
+                            continue;
+                        }
+                    }
                     var builder = pack.syncBuilder();
                     builder.init(ignoreCaches);
                     builders.add(builder);

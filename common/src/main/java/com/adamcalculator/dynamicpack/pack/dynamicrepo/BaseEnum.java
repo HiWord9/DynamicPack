@@ -114,7 +114,7 @@ public class BaseEnum {
         public void apply(BaseContent[] contents) throws Exception {
             for (String contentId : this.contents.keySet()) {
                 boolean bool = this.contents.get(contentId);
-                BaseContent.findById(contents, contentId).setOverrideType(OverrideType.ofBoolean(bool));
+                BaseContent.findById(contents, contentId).setOverrideType(OverrideType.ofBoolean(bool), contents);
             }
         }
 

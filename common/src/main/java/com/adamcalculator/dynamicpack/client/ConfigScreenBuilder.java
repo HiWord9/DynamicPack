@@ -15,6 +15,7 @@ public class ConfigScreenBuilder {
     public static Screen create(Screen parent) {
         var config = YetAnotherConfigLib.createBuilder()
                 .title(Component.literal("DynamicPack"))
+                .category(buildGeneralCategory())
                 .category(buildNetworkCategory())
                 .category(buildDebugCategory())
                 .save(() -> DynamicPackMod.getConfig().save())
@@ -24,16 +25,51 @@ public class ConfigScreenBuilder {
         return new YACLScreen(config, parent);
     }
 
-    private static ConfigCategory buildDebugCategory() {
+    private static ConfigCategory buildGeneralCategory() {
         return ConfigCategory.createBuilder()
-                .name(Component.nullToEmpty("Debug"))
+                .name(Component.translatable("dynamicpack.screen.config.category.general"))
                 .group(OptionGroup.createBuilder()
                         .option(Option.<Boolean>createBuilder()
-                                .name(Component.literal("Log all files changes"))
+                                .name(Component.translatable("dynamicpack.screen.config.category.general.isAutoUpdateAtLaunch"))
+                                .description(OptionDescription.of(Component.translatable("dynamicpack.screen.config.category.general.isAutoUpdateAtLaunch.description")))
+                                .binding(Config.DEF.isAutoUpdateAtLaunch(), () -> DynamicPackMod.getConfig().isAutoUpdateAtLaunch(), newVal -> {
+                                    DynamicPackMod.getConfig().setAutoUpdateAtLaunch(newVal);
+                                })
+                                .controller(it -> BooleanControllerBuilder.create(it).yesNoFormatter()).build())
+
+
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("dynamicpack.screen.config.category.general.updateOnlyEnabledPacks"))
+                                .description(OptionDescription.of(Component.translatable("dynamicpack.screen.config.category.general.updateOnlyEnabledPacks.description")))
+                                .binding(Config.DEF.isUpdateOnlyEnabledPacks(), () -> DynamicPackMod.getConfig().isUpdateOnlyEnabledPacks(), newVal -> {
+                                    DynamicPackMod.getConfig().setUpdateOnlyEnabledPacks(newVal);
+                                })
+                                .controller(it -> BooleanControllerBuilder.create(it).yesNoFormatter()).build())
+
+                        .build())
+                .build();
+    }
+
+    private static ConfigCategory buildDebugCategory() {
+        return ConfigCategory.createBuilder()
+                .name(Component.translatable("dynamicpack.screen.config.category.debug"))
+                .name(Component.translatable("dynamicpack.screen.config.category.debug.description"))
+                .group(OptionGroup.createBuilder()
+                        .name(Component.literal("Calculator's category ^_^"))
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("dynamicpack.screen.config.category.debug.logAllFilesChanges"))
                                 .binding(Config.DEF.isLogAllFilesChanges(), () -> DynamicPackMod.getConfig().isLogAllFilesChanges(), newVal -> {
                                     DynamicPackMod.getConfig().setLogAllFilesChanges(newVal);
                                 })
                                 .controller(TickBoxControllerBuilder::create).build())
+
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.translatable("dynamicpack.screen.config.category.debug.ignoreHidden"))
+                                .binding(Config.DEF.dynamicRepoIsIgnoreHiddenContentFlag(), () -> DynamicPackMod.getConfig().dynamicRepoIsIgnoreHiddenContentFlag(), newVal -> {
+                                    DynamicPackMod.getConfig().setDebugIgnoreHiddenFlagInContents(newVal);
+                                })
+                                .controller(TickBoxControllerBuilder::create).build())
+
                         .build())
                 .build();
     }

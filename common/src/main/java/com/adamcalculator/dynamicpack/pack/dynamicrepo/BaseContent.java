@@ -1,6 +1,7 @@
 package com.adamcalculator.dynamicpack.pack.dynamicrepo;
 
 import com.adamcalculator.dynamicpack.pack.OverrideType;
+import org.apache.commons.lang3.Validate;
 
 import java.util.Set;
 
@@ -37,12 +38,32 @@ public class BaseContent {
         return required;
     }
 
-    public void nextOverride() {
-        setOverrideType(overrideType.next());
+    public void nextOverride(BaseContent[] baseContents) {
+        setOverrideType(overrideType.next(), baseContents);
+
     }
 
-    public void setOverrideType(OverrideType overrideType) {
+    public void setOverrideType(OverrideType overrideType, BaseContent[] baseContents) {
         this.overrideType = overrideType;
+        boolean status = getState();
+
+        if (status) {
+            for (String s : getExclude()) {
+                BaseContent byId = BaseContent.findById(baseContents, s);
+                Validate.notNull(byId);
+
+                if (byId.isRequired()) {
+                    throw new RuntimeException("Exclude a required not allowed!");
+                }
+                if (byId.getState()) {
+                    byId.setOverrideType(OverrideType.FALSE, baseContents);
+                }
+            }
+        }
+    }
+
+    private boolean getState() {
+        return getOverride().asBoolean(required || defaultStatus);
     }
 
     public OverrideType getOverride() {

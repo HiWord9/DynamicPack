@@ -77,6 +77,7 @@ public class PackUtil {
                     throw new RuntimeException("File " + path + " download error. From url: " + url + ". Expected hash: " + hash, e);
                 }
                 return;
+
             } catch (Exception e) {
                 Out.error("downloadPackFile. Attempt=" + (maxI - i + 1) + "/" + maxI, e);
                 if (i == 1) {
