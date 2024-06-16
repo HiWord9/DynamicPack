@@ -14,7 +14,6 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -24,17 +23,17 @@ import java.util.function.Consumer;
 public class DynamicPackScreen extends Screen {
     private final Screen parent;
     private DynamicResourcePack pack;
-    private final MutableComponent screenDescText;
     private Button syncButton;
     private final Consumer<DynamicResourcePack> destroyListener = this::setPack;
     private Button contentsButton;
+    private Button syncButtonThis;
+    private Button syncButtonAll;
 
     public DynamicPackScreen(Screen parent, DynamicResourcePack pack) {
         super(Component.literal(pack.getName()).withStyle(ChatFormatting.BOLD));
         this.pack = pack;
         this.minecraft = Minecraft.getInstance();
         this.parent = parent;
-        this.screenDescText = Component.translatable("dynamicpack.screen.pack.description");
         setPack(pack);
     }
 
@@ -51,20 +50,39 @@ public class DynamicPackScreen extends Screen {
         Compat.renderBackground(this, context, mouseX, mouseY, delta);
         syncButton.active = !SyncingTask.isSyncing();
         contentsButton.active = !SyncingTask.isSyncing();
+
+        if (SyncingTask.isSyncing()) {
+            hideSyncSpecButtons();
+        }
+
         int h = 20;
         Compat.drawString(context, this.font, this.title, 20, 8, 16777215);
-        Compat.drawString(context, this.font, screenDescText, 20, 20 + h, 16777215);
-        Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.remote_type", pack.getRemoteType()), 20, 36 + h, 16777215);
+        Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.description").getString(999), 20, 20 + h, width - 125, 2, ChatFormatting.GREEN.getColor());
+        Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.remote_type", pack.getRemoteType()), 20, 40 + h, 16777215);
 
-
-        if (pack.getLatestException() != null) {
-            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.latestException", TranslatableException.getComponentFromException(pack.getLatestException())).getString(512), 20, 78 + h, width - 40, 99, 0xff2222);
+        h += 4;
+        Exception exception = pack.getLatestException();
+        if (exception != null) {
+            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.latestException", TranslatableException.getComponentFromException(exception)).getString(512), 20, 78 + h, width - 40, 99, 0xff2222);
             h+=10;
         }
 
         if (SyncingTask.isSyncing()) {
             Compat.drawWrappedString(context, SyncingTask.getLogs(), 20, 78+30 + h, 500, 99, 0xCCCCCC);
-            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta)).getString(512), 20, 52 + h, width, 2, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
+            StringBuilder asciiPercentate = new StringBuilder();
+            int percentage = 0;
+            try {
+                percentage = (int) ((float)SyncingTask.currentRootSyncBuilder.getDownloadedSize() / (float)SyncingTask.currentRootSyncBuilder.getUpdateSize() * 100f);
+                for (int i = 0; i < 25; i++) {
+                    int i1 = percentage / 4;
+                    if (i >= i1) {
+                        asciiPercentate.append("_");
+                    } else {
+                        asciiPercentate.append("#");
+                    }
+                }
+            } catch (Exception ignored) {}
+            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta), percentage, "["+asciiPercentate+"]").getString(512), 20, 52 + h, width, 3, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
 
         } else {
             Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
@@ -75,13 +93,41 @@ public class DynamicPackScreen extends Screen {
         super.render(context, mouseX, mouseY, delta);
     }
 
+    private void hideSyncSpecButtons() {
+        syncButtonThis.visible = false;
+        syncButtonAll.visible = false;
+    }
+
     @Override
     protected void init() {
         addRenderableWidget(syncButton = Compat.createButton(
                 Component.translatable("dynamicpack.screen.pack.manually_sync"),
-                        () -> DynamicPackMod.INSTANCE.startManuallySync(),
+                () -> {
+                    syncButtonThis.visible = !syncButtonThis.visible;
+                    syncButtonAll.visible = !syncButtonAll.visible;
+                },
                 100, 20, width - 120, 10
         ));
+
+        addRenderableWidget(syncButtonThis = Compat.createButton(
+                Component.translatable("dynamicpack.screen.pack.manually_sync.this"),
+                () -> {
+                    DynamicPackMod.getInstance().startManuallySync(pack);
+                    hideSyncSpecButtons();
+                },
+                48, 20, width - 120, 35
+        ));
+
+        addRenderableWidget(syncButtonAll = Compat.createButton(
+                Component.translatable("dynamicpack.screen.pack.manually_sync.all"),
+                () -> {
+                    DynamicPackMod.getInstance().startManuallySync();
+                    hideSyncSpecButtons();
+                },
+                48, 20, width - 120 + 54, 35
+        ));
+
+        hideSyncSpecButtons();
 
         addRenderableWidget(Compat.createButton(CommonComponents.GUI_DONE, this::onClose, 150, 20, this.width / 2 + 4, this.height - 48));
         addRenderableWidget(contentsButton = Compat.createButton(Component.translatable("dynamicpack.screen.pack.dynamic.contents"), () -> {

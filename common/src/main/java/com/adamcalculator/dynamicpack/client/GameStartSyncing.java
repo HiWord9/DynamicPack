@@ -38,13 +38,13 @@ public class GameStartSyncing extends Thread {
         SyncingTask.launchTaskAsSyncing(() -> {
             try {
                 StatusChecker.check(); // <-- don't forget check a status
-                syncBuilder = SyncingTask.rootSyncBuilder();
+                SyncingTask.currentRootSyncBuilder = syncBuilder = SyncingTask.rootSyncBuilder();
                 syncBuilder.init(false);
 
                 if (syncBuilder.isUpdateAvailable()) {
                     boolean reloadRequired = syncBuilder.doUpdate(createSyncProgress());
                     if (!lockResourcesLoading && reloadRequired) {
-                        DynamicPackMod.INSTANCE.needResourcesReload();
+                        DynamicPackMod.getInstance().needResourcesReload();
                     }
                 }
 
@@ -52,6 +52,7 @@ public class GameStartSyncing extends Thread {
                 Out.error("Error while GameStartSyncing...", e);
             }
             unlock(); // <--- Unlock main thread!
+            SyncingTask.currentRootSyncBuilder = null;
         });
     }
 

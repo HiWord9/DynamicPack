@@ -8,6 +8,7 @@ import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.SyncProgress;
 import com.adamcalculator.dynamicpack.util.*;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,14 +22,14 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class DynamicRepoSyncBuilder extends SyncBuilder {
-    private static int DOWNLOAD_THREADS_COUNT = 8;
+    public static int DOWNLOAD_THREADS_COUNT = 8;
     private static int executorCounter = 0;
 
     private final DynamicResourcePack pack;
     private final DynamicRepoRemote remote;
 
     private final Set<String> oldestFilesList = new HashSet<>();
-    private final boolean doNotDeleteOldestFiles = false;
+    private boolean doNotDeleteOldestFiles = false;
     private final HashMap<String, DynamicFile> dynamicFiles = new HashMap<>();
     private boolean updateAvailable;
     private long updateSize;
@@ -72,13 +73,39 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
             // init oldestFilesList before init contents
             PackUtil.openPackFileSystem(pack.getLocation(), packFileSystem -> PathsUtil.walkScan(oldestFilesList, packFileSystem));
 
-            // init all active contents
-            for (JsonObject jsonContent : calcActiveContents()) {
-                processContentInit(jsonContent);
-            }
+            try {
+                // check
+                checkContents(repoJson.getAsJsonArray("contents"));
 
-            // notify DynamicPackRemote about actual repoJson
-            remote.notifyNewRemoteJson(repoJson);
+                // notify DynamicPackRemote about actual repoJson
+                remote.notifyNewRemoteJson(repoJson);
+
+                // init all active contents
+                for (JsonObject jsonContent : calcActiveContents()) {
+                    processContentInit(jsonContent);
+                }
+
+            } catch (Exception e) {
+                // save the resource pack from disintegration
+                doNotDeleteOldestFiles = true;
+                throw e;
+            }
+        }
+    }
+
+    public void checkContents(JsonArray contents) {
+        Set<String> ids = new HashSet<>();
+
+        for (JsonElement content : contents) {
+            JsonObject object = content.getAsJsonObject();
+            var id = JsonUtils.getString(object, "id");
+            InputValidator.throwIsContentIdInvalid(id);
+
+            if (!ids.contains(id)) {
+                ids.add(id);
+            } else {
+                throw new RuntimeException("Duplicate content found! Invalid format. Id: " + id);
+            }
         }
     }
 
@@ -268,8 +295,8 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         }).whenComplete((files, th) -> {
             if (th == null) {
                 for (DynamicFile file : files) {
-                    if (file == null) {
-                        Out.warn("DynamicFile null in whenComplete...");
+                    if (file == null || file.getDownloadedPath() == null) {
+                        Out.warn("DynamicFile null or downloadPath null in whenComplete...");
                         continue;
                     }
                     markReloadRequired();

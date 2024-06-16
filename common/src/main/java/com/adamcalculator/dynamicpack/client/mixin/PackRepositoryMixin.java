@@ -22,12 +22,12 @@ public class PackRepositoryMixin {
     @Inject(at = @At("HEAD"), method = "reload")
     private void dynamicpack$reload(CallbackInfo ci) {
         // do nothing if minecraft initialized
-        if (DynamicPackMod.INSTANCE.isMinecraftInitialized()) {
+        if (DynamicPackMod.getInstance().isMinecraftInitialized()) {
             return;
         }
 
         Minecraft client = Minecraft.getInstance();
-        GameStartSyncing syncing = DynamicPackMod.INSTANCE.getGameStartSyncing();
+        GameStartSyncing syncing = DynamicPackMod.getGameStartSyncing();
         if (!syncing.isLockSupported()) {
             return;
         }

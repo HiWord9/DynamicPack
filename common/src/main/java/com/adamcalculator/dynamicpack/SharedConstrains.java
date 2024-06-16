@@ -33,7 +33,7 @@ public class SharedConstrains {
     public static final int MAX_ATTEMPTS_TO_DOWNLOAD_FILE = 3;
 
     public static final boolean USE_ZIP4J_FOR_UNZIP = false;
-    public static int URLS_BUFFER_SIZE = 1024; // TODO: Add to config...
+    public static int URLS_BUFFER_SIZE = 1024;
 
     // const
     public static final long HTTP_MINIMAL_HEADER_SIZE = 24;

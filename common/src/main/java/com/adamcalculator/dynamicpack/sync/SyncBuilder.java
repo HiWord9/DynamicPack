@@ -21,7 +21,7 @@ public abstract class SyncBuilder {
     public abstract boolean isUpdateAvailable();
 
     /**
-     * @return calculated & cached in init() value
+     * @return calculated and cached in init() value
      */
     public abstract long getUpdateSize();
 

@@ -2,6 +2,7 @@ package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.adamcalculator.dynamicpack.sync.SyncThread;
 import com.adamcalculator.dynamicpack.util.Out;
@@ -88,6 +89,12 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
     @Override
     public void startManuallySync() {
         SyncThread syncThread = new SyncThread("SyncThread-"+(DynamicPackMod.manuallySyncThreadCounter++));
+        syncThread.start();
+    }
+
+    @Override
+    public void startManuallySync(DynamicResourcePack pack) {
+        SyncThread syncThread = new SyncThread("SyncThread-"+(DynamicPackMod.manuallySyncThreadCounter++), pack);
         syncThread.start();
     }
 

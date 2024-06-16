@@ -18,7 +18,7 @@ import java.util.List;
 public abstract class DynamicPackMod {
 
 	// singleton
-	public static DynamicPackMod INSTANCE;
+	private static DynamicPackMod INSTANCE;
 
 
 	private Loader loader = Loader.UNKNOWN;
@@ -60,7 +60,10 @@ public abstract class DynamicPackMod {
 		this.gameStartSyncing = new GameStartSyncing();
 		this.gameStartSyncing.start();
 	}
-	
+
+	public static DynamicPackMod getInstance() {
+		return INSTANCE;
+	}
 	
 	public void rescanPacks() {
 		packsContainer.rescan(resourcePacks);
@@ -72,6 +75,8 @@ public abstract class DynamicPackMod {
 	 * Manually re-sync all supported packs
 	 */
 	public abstract void startManuallySync();
+
+	public abstract void startManuallySync(DynamicResourcePack pack);
 
 	public abstract void needResourcesReload();
 
@@ -173,5 +178,4 @@ public abstract class DynamicPackMod {
 	public static Config getConfig() {
 		return INSTANCE.config;
 	}
-
 }

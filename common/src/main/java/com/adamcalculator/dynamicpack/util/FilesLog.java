@@ -7,25 +7,22 @@ import java.nio.file.Path;
  */
 public class FilesLog {
     private static final String PREFIX = "[FilesLog] ";
-
-    public static boolean isEnabled() {
-        return false;
-    }
+    public static boolean LOG_ALL_CHANGES = false;
 
     public static void deleted(Path path) {
-        if (isEnabled()) {
+        if (LOG_ALL_CHANGES) {
             Out.debug(PREFIX + "-deleted: " + path);
         }
     }
 
     public static void created(Path path) {
-        if (isEnabled()) {
+        if (LOG_ALL_CHANGES) {
             Out.debug(PREFIX + "+created: " + path);
         }
     }
 
     public static void writtenByUrl(Path path, String url) {
-        if (isEnabled()) {
+        if (LOG_ALL_CHANGES) {
             Out.debug(PREFIX + "=written: (" + url + ")-> " + path);
         }
     }

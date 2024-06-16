@@ -94,6 +94,9 @@ public class DynamicRepoRemote extends Remote {
     }
 
     public void notifyNewRemoteJson(JsonObject repoJson) {
+        // unlink with repo. This is because notify!
+        repoJson = repoJson.deepCopy();
+
         preferences.notifyNewRemoteJson(repoJson);
     }
 }

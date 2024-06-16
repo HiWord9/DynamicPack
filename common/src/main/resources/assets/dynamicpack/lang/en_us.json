@@ -18,6 +18,8 @@
   "dynamicpack.screen.pack.latestUpdated": "Last updated: %s",
   "dynamicpack.screen.pack.latestException": "Last error in this pack: %s\nSee logs for details...",
   "dynamicpack.screen.pack.manually_sync": "Sync manually",
+  "dynamicpack.screen.pack.manually_sync.this": "[This]",
+  "dynamicpack.screen.pack.manually_sync.all": "[All]",
   "dynamicpack.screen.pack.dynamic.contents": "Contents...",
   "dynamicpack.status_checker.not_safe": "Security update available for DynamicPack mod! This message should not be ignored, since the update has fixed possible vulnerabilities: %s",
   "dynamicpack.status_checker.not_safe.toast.title": "DynamicPack",
@@ -35,5 +37,15 @@
   "dynamicpack.screen.pack_contents.state.false": "§cDisabled",
   "dynamicpack.screen.pack_contents.state.default.true": "Default §a(ON)",
   "dynamicpack.screen.pack_contents.state.default.false": "Default §c(OFF)",
-  "dynamicpack.screen.pack.updateStat": "Speed: %s\nETA: %s"
+  "dynamicpack.screen.pack.updateStat": "Speed: %s\nETA: %s\n%s%% %s",
+  "dynamicpack.screen.config.category.network": "Network",
+  "dynamicpack.screen.config.category.network.tooltip": "You can change this if you understand what you are doing",
+  "dynamicpack.screen.config.category.network.group.name": "Download",
+  "dynamicpack.screen.config.category.network.group.description": "",
+  "dynamicpack.screen.config.category.network.bufferSize.name": "Buffer size",
+  "dynamicpack.screen.config.category.network.bufferSize.description": "Files are downloaded in small parts. If you have high Internet speed, you can increase the size of the part to reduce CPU load. Please note that if you make the size larger than the average size of downloaded files, the buffer will be half empty most of the time, which means it will waste your RAM.",
+
+  "dynamicpack.screen.config.category.network.multithread.threads.name": "Number of threads",
+  "dynamicpack.screen.config.category.network.multithread.threads.description": "In resource packs like 'dynamic_repo' the mod uses multi-threaded downloading. This setting sets the number of threads.\n\nPlease note that values greater than 10 are not recommended, since the service from which files are downloaded may limit the maximum number of connections from one IP address.\n\nIf your Internet initializes the HTTPS connection very slowly, but downloading occurs faster, increasing this setting will give a noticeable boost."
+
 }

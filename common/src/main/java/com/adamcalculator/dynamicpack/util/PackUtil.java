@@ -4,6 +4,7 @@ import com.adamcalculator.dynamicpack.SharedConstrains;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
@@ -52,7 +53,11 @@ public class PackUtil {
         }
     }
 
-    public static void downloadPackFile(String url, Path path, String hash, LongConsumer progress) {
+    /**
+     * Download file for dynamic_repo
+     * @throws IOException if latest attempt failed exception rethrown
+     */
+    public static void downloadPackFile(String url, Path path, String hash, LongConsumer progress) throws IOException {
         final int maxI = SharedConstrains.MAX_ATTEMPTS_TO_DOWNLOAD_FILE;
         int i = maxI;
         while (i > 0) {
@@ -74,10 +79,12 @@ public class PackUtil {
                 return;
             } catch (Exception e) {
                 Out.error("downloadPackFile. Attempt=" + (maxI - i + 1) + "/" + maxI, e);
+                if (i == 1) {
+                    throw e;
+                }
             }
 
             i--;
         }
-        Out.warn("Failed to download file " + path + " from " + url);
     }
 }

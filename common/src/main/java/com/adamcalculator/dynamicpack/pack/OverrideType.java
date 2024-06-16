@@ -23,4 +23,11 @@ public enum OverrideType {
         }
         return this == TRUE;
     }
+
+    public boolean asBoolean(boolean def) {
+        if (this == NOT_SET) {
+            return def;
+        }
+        return this == TRUE;
+    }
 }

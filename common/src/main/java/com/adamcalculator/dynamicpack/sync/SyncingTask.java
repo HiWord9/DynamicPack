@@ -19,6 +19,7 @@ public class SyncingTask {
     @NotNull private static String syncingLog2 = "";
     @NotNull private static String syncingLog3 = "";
     public static long eta;
+    public static SyncBuilder currentRootSyncBuilder;
     @Nullable public static String currentPackName;
 
 
@@ -30,7 +31,7 @@ public class SyncingTask {
         if (isSyncing()) {
             throw new RuntimeException("Failed to launchTaskAsSyncing. Other task currently working...");
         }
-        var mod = DynamicPackMod.INSTANCE;
+        var mod = DynamicPackMod.getInstance();
         setSyncing(true);
         mod.rescanPacks();
         mod.blockRescan(true);
@@ -71,7 +72,7 @@ public class SyncingTask {
     }
 
 
-    public static SyncBuilder rootSyncBuilder() throws Exception {
+    public static SyncBuilder rootSyncBuilder() {
         return new SyncBuilder() {
             private final Set<SyncBuilder> builders = new HashSet<>();
             private boolean updateAvailable;
@@ -80,6 +81,8 @@ public class SyncingTask {
 
             @Override
             public void init(boolean ignoreCaches) throws Exception {
+                clearLog();
+
                 for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
                     var builder = pack.syncBuilder();
                     builder.init(ignoreCaches);

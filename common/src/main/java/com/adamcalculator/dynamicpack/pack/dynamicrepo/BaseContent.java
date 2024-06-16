@@ -1,6 +1,8 @@
-package com.adamcalculator.dynamicpack.pack;
+package com.adamcalculator.dynamicpack.pack.dynamicrepo;
 
-import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
+import com.adamcalculator.dynamicpack.pack.OverrideType;
+
+import java.util.Set;
 
 public class BaseContent {
     private final DynamicRepoRemote parentRemote;
@@ -14,8 +16,9 @@ public class BaseContent {
     //
     private final boolean defaultStatus;
     private final boolean hidden;
+    private final Set<String> exclude;
 
-    public BaseContent(DynamicRepoRemote parentRemote, String id, boolean required, OverrideType overrideType, String name, boolean defaultStatus, boolean hidden) {
+    public BaseContent(DynamicRepoRemote parentRemote, String id, boolean required, OverrideType overrideType, String name, boolean defaultStatus, boolean hidden, Set<String> exclude) {
         this.parentRemote = parentRemote;
         this.id = id;
         this.required = required;
@@ -23,6 +26,7 @@ public class BaseContent {
         this.name = name;
         this.defaultStatus = defaultStatus;
         this.hidden = hidden;
+        this.exclude = exclude;
     }
 
     public String getId() {
@@ -33,15 +37,19 @@ public class BaseContent {
         return required;
     }
 
-    public void nextOverride() throws Exception {
+    public void nextOverride() {
         setOverrideType(overrideType.next());
+    }
+
+    public void setOverrideType(OverrideType overrideType) {
+        this.overrideType = overrideType;
     }
 
     public OverrideType getOverride() {
         return overrideType;
     }
 
-    public boolean getWithDefaultState() {
+    public boolean getDefaultState() {
         return defaultStatus;
     }
 
@@ -53,8 +61,16 @@ public class BaseContent {
         return hidden;
     }
 
-    public void setOverrideType(OverrideType overrideType) throws Exception {
-        this.overrideType = overrideType;
-        parentRemote.getPreferences().setContentOverride(this, overrideType);
+    public Set<String> getExclude() {
+        return exclude;
+    }
+
+    public static BaseContent findById(BaseContent[] contents, String findId) {
+        for (BaseContent content : contents) {
+            if (content.getId().equalsIgnoreCase(findId)) {
+                return content;
+            }
+        }
+        return null;
     }
 }

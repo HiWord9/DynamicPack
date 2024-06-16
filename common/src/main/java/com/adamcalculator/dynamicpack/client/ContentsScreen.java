@@ -1,11 +1,12 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
-import com.adamcalculator.dynamicpack.pack.BaseContent;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.BaseContent;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.BaseEnum;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoPreferences;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.OverrideType;
-import com.adamcalculator.dynamicpack.util.Out;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -16,19 +17,22 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class ContentsScreen extends Screen {
     private final Screen parent;
     private final DynamicResourcePack pack;
-    private ContentsList contentsList;
+    private final DynamicRepoPreferences preferences;
     private final Consumer<DynamicResourcePack> onPackReSync = pack -> Compat.runAtUI(this::onClose);
+    private ContentsList contentsList;
     private boolean syncOnExit = false;
     private Button doneButton;
     private Button resetButton;
 
+    protected final HashMap<String, BaseContent> contentIdsAssociation = new HashMap<>();
     protected final LinkedHashMap<BaseContent, OverrideType> preChangeStates = new LinkedHashMap<>();
+    protected final LinkedHashSet<BaseEnum> enums = new LinkedHashSet<>();
 
     protected ContentsScreen(Screen parent, DynamicResourcePack pack) {
         super(Component.translatable("dynamicpack.screen.pack_contents.title"));
@@ -36,10 +40,14 @@ public class ContentsScreen extends Screen {
         this.pack = pack;
         this.minecraft = Minecraft.getInstance();
         this.pack.addDestroyListener(onPackReSync);
+        this.preferences = ((DynamicRepoRemote) pack.getRemote()).getPreferences();
 
-        for (BaseContent knownContent : ((DynamicRepoRemote) pack.getRemote()).getPreferences().getKnownContents()) {
+        for (BaseContent knownContent : preferences.getKnownContents()) {
+            contentIdsAssociation.put(knownContent.getId(), knownContent);
             preChangeStates.put(knownContent, knownContent.getOverride());
         }
+
+        enums.addAll(Arrays.asList(preferences.getKnownEnums()));
     }
 
     public boolean isChanges() {
@@ -57,11 +65,7 @@ public class ContentsScreen extends Screen {
     public void reset() {
         for (BaseContent knownContent : preChangeStates.keySet()) {
             OverrideType overrideType = preChangeStates.get(knownContent);
-            try {
-                knownContent.setOverrideType(overrideType);
-            } catch (Exception e) {
-                Out.error("Error while reset changes for content: " + knownContent, e);
-            }
+            knownContent.setOverrideType(overrideType);
         }
 
         contentsList.refreshAll();
@@ -76,11 +80,20 @@ public class ContentsScreen extends Screen {
 
     @Override
     public void onClose() {
+        applyChanges();
+
         this.minecraft.setScreen(this.parent);
         pack.removeDestroyListener(onPackReSync);
         if (syncOnExit) {
-            DynamicPackMod.INSTANCE.startManuallySync();
+            DynamicPackMod.getInstance().startManuallySync(pack);
         }
+    }
+
+    private void applyChanges() {
+        for (BaseContent baseContent : preChangeStates.keySet()) {
+            preferences.setContentOverride(baseContent, baseContent.getOverride());
+        }
+        pack.saveClientFile();
     }
 
     @Override
@@ -115,5 +128,17 @@ public class ContentsScreen extends Screen {
             doneButton.setTooltip(null);
         }
         resetButton.visible = syncOnExit;
+    }
+
+    public BaseContent[] getBaseContents() {
+        return preChangeStates.keySet().toArray(new BaseContent[0]);
+    }
+
+    public BaseEnum[] getBaseEnum() {
+        return enums.toArray(new BaseEnum[0]);
+    }
+
+    public BaseContent getById(String id) {
+        return contentIdsAssociation.getOrDefault(id, null);
     }
 }

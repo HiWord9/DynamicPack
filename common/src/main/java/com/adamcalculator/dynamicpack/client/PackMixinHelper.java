@@ -36,7 +36,7 @@ public class PackMixinHelper {
 
     public static void renderResourcePackEntry(Object resourcePackEntryMixin, GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta, CallbackInfo ci) {
         TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry) resourcePackEntryMixin;
-        DynamicResourcePack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
+        DynamicResourcePack pack = DynamicPackMod.getInstance().getDynamicPackByMinecraftName(entry.getPackId());
         if (pack != null) {
             int i = mouseX - x;
             int j = mouseY - y;
@@ -46,7 +46,7 @@ public class PackMixinHelper {
 
     public static void mouseClicked(Object resourcePackEntryMixin, TransferableSelectionList widget, double mouseX, double mouseY, int button, CallbackInfoReturnable<Boolean> cir) {
         TransferableSelectionList.PackEntry entry = (TransferableSelectionList.PackEntry) resourcePackEntryMixin;
-        DynamicResourcePack pack = DynamicPackMod.INSTANCE.getDynamicPackByMinecraftName(entry.getPackId());
+        DynamicResourcePack pack = DynamicPackMod.getInstance().getDynamicPackByMinecraftName(entry.getPackId());
         if (pack != null) {
             double d = mouseX - (double)widget.getRowLeft();
             double e = mouseY - (double)widget.getRowTop(widget.children().indexOf(entry));
@@ -64,10 +64,10 @@ public class PackMixinHelper {
     }
 
     public static void minecraftInitReturned() {
-        DynamicPackMod.INSTANCE.minecraftInitialized();
+        DynamicPackMod.getInstance().minecraftInitialized();
     }
 
     public static void updatePacksMinecraftRequest() {
-        DynamicPackMod.INSTANCE.rescanPacks();
+        DynamicPackMod.getInstance().rescanPacks();
     }
 }

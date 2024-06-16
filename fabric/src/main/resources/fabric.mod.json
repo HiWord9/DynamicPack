@@ -19,6 +19,9 @@
         "preLaunch": [
           "com.adamcalculator.dynamicpack.client.fabric.FabricDynamicPreLaunch"
         ],
+        "client": [
+            "com.adamcalculator.dynamicpack.client.fabric.FabricDynamicLaunch"
+        ],
         "modmenu": [
             "com.adamcalculator.dynamicpack.client.fabric.ModMenuIntegration"
         ]
@@ -31,6 +34,7 @@
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
+        "yet_another_config_lib_v3": "*",
         "minecraft": "${fabric_minecraft_version}",
         "java": ">=17"
     }

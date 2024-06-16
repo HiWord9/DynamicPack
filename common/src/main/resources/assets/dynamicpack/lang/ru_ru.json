@@ -18,6 +18,8 @@
   "dynamicpack.screen.pack.latestUpdated": "Обновлён: %s",
   "dynamicpack.screen.pack.latestException": "Последняя ошибка в паке: %s\nДля деталей смотрите логи",
   "dynamicpack.screen.pack.manually_sync": "Синхр. вручную",
+  "dynamicpack.screen.pack.manually_sync.this": "[Этот]",
+  "dynamicpack.screen.pack.manually_sync.all": "[Все]",
   "dynamicpack.screen.pack.dynamic.contents": "Контенты...",
   "dynamicpack.status_checker.not_safe": "Доступно обновление безопасности для мода DynamicPack! Это сообщение не стоит игнорировать, поскольку в обновлении были исправлены возможные уязвимости: %s",
   "dynamicpack.status_checker.not_safe.toast.title": "DynamicPack",
@@ -35,6 +37,16 @@
   "dynamicpack.screen.pack_contents.state.false": "§cОтключено",
   "dynamicpack.screen.pack_contents.state.default.true": "По умолчанию §a(вкл)",
   "dynamicpack.screen.pack_contents.state.default.false": "По умолчанию §c(выкл)",
-  "dynamicpack.screen.pack.updateStat": "Скорость: %s\nОсталось: %s"
+  "dynamicpack.screen.pack.updateStat": "Скорость: %s\nОсталось: %s\n%s%% %s",
+  "dynamicpack.screen.config.category.network": "Сеть",
+  "dynamicpack.screen.config.category.network.tooltip": "Вы можете поменять это если понимаете что делаете",
+  "dynamicpack.screen.config.category.network.group.name": "Скачивание",
+  "dynamicpack.screen.config.category.network.group.description": "",
+  "dynamicpack.screen.config.category.network.bufferSize.name": "Размер буффера",
+  "dynamicpack.screen.config.category.network.bufferSize.description": "Файлы загружаются небольшими частями. Если у вас высокая скорость интернета, вы можете увеличить размер части чтобы уменьшить нагрузку на процессор. Обратите внимание, что если вы сделаете размер больше среднего размера загружаемых файлов, большую часть времени буфер будет наполовину пуст, а это значит, что он будет тратить вашу оперативную память не эффективно.",
+
+  "dynamicpack.screen.config.category.network.multithread.threads.name": "Количество потоков",
+  "dynamicpack.screen.config.category.network.multithread.threads.description": "В ресурспаках типа 'dynamic_repo' мод применяет мнопоточное скачивание. Эта настройка устанавливает количество потоков.\n\nУчтите, значения больше 10 не рекомендуются, поскольку сервис откуда скачиваются файлы может ограничивать максимальное количество подключений с одного айпи адреса.\n\nЕсли ваш интернет очень медленно инициализирует HTTPS соединение, но скачивание происходит быстрее, повышение этой настройки даст ощутимый буст."
+
 
 }

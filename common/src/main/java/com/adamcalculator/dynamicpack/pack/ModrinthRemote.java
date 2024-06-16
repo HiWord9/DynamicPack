@@ -46,12 +46,11 @@ public class ModrinthRemote extends Remote {
         var ver = JsonUtils.optString(remote, "game_version", "no_specify");
         this.usesCurrentGameVersion = ver.equalsIgnoreCase("current");
         this.noSpecifyGameVersion = ver.equalsIgnoreCase("no_specify");
-        this.gameVersion = usesCurrentGameVersion ? DynamicPackMod.INSTANCE.getCurrentGameVersion() : ver;
+        this.gameVersion = usesCurrentGameVersion ? DynamicPackMod.getInstance().getCurrentGameVersion() : ver;
     }
 
     /**
      * @return SyncBuilder
-     * @throws Exception any exception while updating
      */
     @Override
     public SyncBuilder syncBuilder() {
@@ -122,7 +121,8 @@ public class ModrinthRemote extends Remote {
                 cachedCurrentJson.remove("version_number");
                 parent.updateJsonLatestUpdate();
 
-                parent.saveClientFile(tempFile.toPath());
+                // save client json
+                PackUtil.openPackFileSystem(tempFile, packRootPath -> parent.saveClientFile(packRootPath));
 
                 if (parent.isZip()) {
                     progress.setPhase("Move files...");
@@ -135,6 +135,7 @@ public class ModrinthRemote extends Remote {
                     PathsUtil.delete(tempFile.toPath());
                 }
 
+                // save client json
                 progress.setPhase("Saving dynamicmcpack.json");
                 parent.saveClientFile();
                 progress.setPhase("Success");

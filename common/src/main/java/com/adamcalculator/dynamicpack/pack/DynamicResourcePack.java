@@ -235,7 +235,7 @@ public class DynamicResourcePack extends AbstractPack {
 
     private boolean checkMinecraftMetaIsValid(String s) {
         try {
-            return DynamicPackMod.INSTANCE.checkResourcePackMetaValid(s);
+            return DynamicPackMod.getInstance().checkResourcePackMetaValid(s);
 
         } catch (Exception e) {
             Out.error("Error while check meta valid.", e);

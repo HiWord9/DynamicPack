@@ -1,18 +1,26 @@
 package com.adamcalculator.dynamicpack.sync;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.util.LoopLog;
 import com.adamcalculator.dynamicpack.util.NetworkStat;
 import com.adamcalculator.dynamicpack.util.Out;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 
 public class SyncThread extends Thread {
     private SyncBuilder syncBuilder;
     private final LoopLog etaLoopLog = new LoopLog(1000);
+    @Nullable private final DynamicResourcePack packSpecify;
 
     public SyncThread(String name) {
+        this(name, null);
+    }
+
+    public SyncThread(String name, @Nullable DynamicResourcePack specifyPack) {
         setName(name);
+        this.packSpecify = specifyPack;
     }
 
     @Override
@@ -26,19 +34,20 @@ public class SyncThread extends Thread {
 
         SyncingTask.launchTaskAsSyncing(() -> {
             try {
-                syncBuilder = SyncingTask.rootSyncBuilder();
+                SyncingTask.currentRootSyncBuilder = syncBuilder = packSpecify == null ? SyncingTask.rootSyncBuilder() : packSpecify.syncBuilder();
                 syncBuilder.init(true);
 
                 if (syncBuilder.isUpdateAvailable()) {
                     boolean reloadRequired = syncBuilder.doUpdate(createSyncProgress());
                     if (reloadRequired) {
-                        DynamicPackMod.INSTANCE.needResourcesReload();
+                        DynamicPackMod.getInstance().needResourcesReload();
                     }
                 }
 
             } catch (Exception e) {
                 Out.error("Error while SyncThread...", e);
             }
+            SyncingTask.currentRootSyncBuilder = null;
         });
     }
 
