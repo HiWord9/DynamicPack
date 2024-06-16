@@ -72,11 +72,13 @@ public class DynamicResourcePack extends AbstractPack {
 
             @Override
             public void init(boolean ignoreCaches) {
+                isSyncing = true;
                 wrapThrowable(() -> {
                     checkNetwork();
                     builder = remote.syncBuilder();
                     builder.init(ignoreCaches);
                 });
+                isSyncing = false;
             }
 
             @Override
