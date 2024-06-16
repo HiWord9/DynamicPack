@@ -1,5 +1,6 @@
 package com.adamcalculator.dynamicpack.pack.dynamicrepo;
 
+import com.adamcalculator.dynamicpack.InputValidator;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.OverrideType;
 import com.adamcalculator.dynamicpack.util.JsonUtils;
@@ -7,6 +8,7 @@ import com.adamcalculator.dynamicpack.util.Out;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import org.apache.commons.lang3.Validate;
 
 import java.util.*;
 
@@ -62,11 +64,48 @@ public class DynamicRepoPreferences {
     }
 
     private void updateKnownGuis(JsonArray guis) {
-        // TODO: more checks
+
         if (guis != null) {
+            validateGuis(guis);
             cachedCurrentJson.add("known_guis", guis);
         } else {
             cachedCurrentJson.remove("known_guis");
+        }
+    }
+
+    private void validateGuis(JsonArray guis) {
+        for (JsonElement _gui : guis) {
+            JsonObject gui = _gui.getAsJsonObject();
+            var type = JsonUtils.getString(gui, "type");
+            var id = JsonUtils.getString(gui, "id");
+
+            InputValidator.throwIsContentIdInvalid(id);
+            InputValidator.throwIsContentIdInvalid(type); // use contentId filter for type.. warning
+
+            if (type.equalsIgnoreCase("enum")) {
+                var enums = gui.getAsJsonObject("enum");
+                for (String key : enums.keySet()) {
+                    InputValidator.throwIsContentIdInvalid(key);
+                    var anEnum = enums.getAsJsonObject(key);
+
+                    if (!InputValidator.isDynamicPackNameValid(JsonUtils.getString(anEnum, "name"))) {
+                        throw new RuntimeException("Name of enum element invalid :( enumKey=" + key);
+                    }
+
+                    JsonObject contents = anEnum.getAsJsonObject("contents");
+                    for (String contentId : contents.keySet()) {
+                        // call get for validate is boolean
+                        JsonUtils.getBoolean(contents, contentId);
+
+                        BaseContent content = BaseContent.findById(getKnownContents(), contentId);
+                        Validate.notNull(content, "Content from enum not found :(");
+
+                        if (content.isRequired()) {
+                            throw new RuntimeException("Override 'required':true content in enum not allowed!");
+                        }
+                    }
+                }
+            }
         }
     }
 
