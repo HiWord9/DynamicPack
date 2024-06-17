@@ -124,7 +124,7 @@ public class DynamicResourcePack extends AbstractPack {
      */
     public void saveClientFile() {
         try {
-            PackUtil.openPackFileSystem(getLocation(), this::saveClientFile);
+            PackUtil.openPackFileSystem(getLocation(), PackUtil.createMcPackFinalizerRunnable(this), this::saveClientFile);
 
         } catch (Exception e) {
             throw new RuntimeException("saveClientFile failed.", e);
@@ -173,6 +173,10 @@ public class DynamicResourcePack extends AbstractPack {
 
     public String getName() {
         return location.getName();
+    }
+
+    public String getMinecraftId() {
+        return "file/" + location.getName();
     }
 
     public JsonObject getPackJson() {

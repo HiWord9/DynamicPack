@@ -117,7 +117,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     @Override
     public boolean doUpdate(SyncProgress progress) throws Exception {
         progress.setPhase("Opening a pack file-system");
-        PackUtil.openPackFileSystem(pack.getLocation(), packFileSystem -> {
+        PackUtil.openPackFileSystem(pack.getLocation(), PackUtil.createMcPackFinalizerRunnable(pack), packFileSystem -> {
             internalProcessDynamicFiles(progress, packFileSystem);
 
             debug("DELETE LIST: " + oldestFilesList);
@@ -180,7 +180,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
 
         // content.json
         JsonObject jsonContentD2 = JsonUtils.fromString(content);
-        PackUtil.openPackFileSystem(remote.parent.getLocation(), (packFileSystem) -> {
+        PackUtil.openPackFileSystem(remote.parent.getLocation(), PackUtil.createMcPackFinalizerRunnable(pack), (packFileSystem) -> {
             long formatVersion;
             if ((formatVersion = JsonUtils.getLong(jsonContentD2, "formatVersion")) != 1) {
                 throw new RuntimeException("Incompatible formatVersion: " + formatVersion);

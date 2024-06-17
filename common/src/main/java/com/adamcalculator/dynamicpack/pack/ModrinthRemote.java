@@ -125,6 +125,7 @@ public class ModrinthRemote extends Remote {
                 PackUtil.openPackFileSystem(tempFile, packRootPath -> parent.saveClientFile(packRootPath));
 
                 if (parent.isZip()) {
+                    PackUtil.closeFiles(parent.getLocation());
                     progress.setPhase("Move files...");
                     PathsUtil.moveFile(tempFile, parent.getLocation());
 
