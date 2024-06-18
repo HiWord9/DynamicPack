@@ -5,11 +5,11 @@ import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoSyncBuilder;
 import com.adamcalculator.dynamicpack.util.FilesLog;
 import com.adamcalculator.dynamicpack.util.Out;
 
-import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.util.PathsUtil;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
 public class Config {
@@ -101,10 +101,11 @@ public class Config {
         try {
             String json = SharedConstrains.GSON.toJson(this);
 
-            File file = DynamicPackMod.getConfigFile();
-            PathsUtil.delete(file.toPath());
-            file.createNewFile();
-            Files.writeString(file.toPath(), json, StandardOpenOption.WRITE);
+            Path file = DynamicPackMod.getConfigFile().toPath();
+            PathsUtil.delete(file);
+            PathsUtil.createDirsToFile(file);
+            PathsUtil.createFile(file);
+            Files.writeString(file, json, StandardOpenOption.WRITE);
 
         } catch (Exception e) {
             Out.error("Config save failed :(", e);
