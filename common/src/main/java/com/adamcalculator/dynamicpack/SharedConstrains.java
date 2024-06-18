@@ -35,6 +35,7 @@ public class SharedConstrains {
     public static final int MAX_ATTEMPTS_TO_DOWNLOAD_FILE = 3;
 
     public static final boolean USE_ZIP4J_FOR_UNZIP = false;
+    public static final String TEMP_DIR_NAME = "dynamicpack_f02ffd55_cd44_458a_8d58_e31b11313a53";
     public static int URLS_BUFFER_SIZE = 1024;
 
     // const

@@ -107,7 +107,7 @@ public abstract class DynamicPackMod {
 	@Nullable
 	public static DynamicResourcePack getDynamicPackByMinecraftName(String name) {
 		for (DynamicResourcePack pack : getPacksContainer().getPacks()) {
-			if (("file/" + pack.getName()).equals(name)) {
+			if (pack.getMinecraftId().equals(name)) {
 				return pack;
 			}
 		}
@@ -128,7 +128,7 @@ public abstract class DynamicPackMod {
 
         for (String readLine : lines) {
 			if (readLine.startsWith("resourcePacks:")) {
-				String name = "file/" + pack.getLocation().getName();
+				String name = pack.getMinecraftId();
 				if (readLine.contains(name)) {
 					return true;
 				}

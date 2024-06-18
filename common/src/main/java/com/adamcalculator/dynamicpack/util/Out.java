@@ -4,6 +4,9 @@ import com.adamcalculator.dynamicpack.SharedConstrains;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.FileNotFoundException;
+import java.net.UnknownHostException;
+
 /**
  * Mod logger
  */
@@ -21,17 +24,28 @@ public class Out {
             System.out.println(PREFIX + o);
             return;
         }
-        LOGGER.info(PREFIX + o);
+        LOGGER.info("{}{}", PREFIX, o);
     }
 
     public static void error(String s, Throwable e) {
         if (!ENABLE) return;
+        boolean stacktrace = isPrintErrorStackTrace(e);
         if (USE_SOUT) {
             System.err.println(PREFIX + s);
-            e.printStackTrace();
+            if (stacktrace) {
+                e.printStackTrace();
+            }
             return;
         }
-        LOGGER.error(PREFIX + s, e);
+        if (stacktrace) {
+            LOGGER.error("{}{}", PREFIX, s, e);
+        } else {
+            LOGGER.error("{}{}: {}", PREFIX, s, e.toString());
+        }
+    }
+
+    private static boolean isPrintErrorStackTrace(Throwable e) {
+        return !(e instanceof FileNotFoundException || e instanceof UnknownHostException);
     }
 
     public static void warn(String s) {
@@ -40,7 +54,7 @@ public class Out {
             System.out.println(PREFIX + "WARN: " + s);
             return;
         }
-        LOGGER.warn(PREFIX + s);
+        LOGGER.warn("{}{}", PREFIX, s);
     }
 
     /**
@@ -53,7 +67,7 @@ public class Out {
         }
 
         try {
-            LOGGER.warn("[DynamicPack] " + s);
+            LOGGER.warn("[DynamicPack] {}", s);
         } catch (Exception ignored) {
             System.out.println("[DynamicPack] " + s);
         }
@@ -78,6 +92,7 @@ public class Out {
     }
 
     public static void init(Loader loader) {
+        // add DynamicPack prefix in Fabric releases
         if (loader == Loader.FABRIC && SharedConstrains.isRelease()) {
             PREFIX = DEFAULT_PREFIX;
         }

@@ -211,7 +211,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
                     // block to remotely patch a client file dynamicmcpack.json
                     if (filePath.getFileName().toString().contains(SharedConstrains.CLIENT_FILE)) {
-                        Out.warn("File " + SharedConstrains.CLIENT_FILE + " in pack " + pack.getName() + " can't be updated remotely!");
+                        warn("File " + SharedConstrains.CLIENT_FILE + " can't be updated remotely!");
                         continue;
                     }
 
@@ -223,7 +223,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                     String fileHash = JsonUtils.getString(fileExtra, "hash");
                     int fileSize = JsonUtils.optInt(fileExtra, "size", Integer.MAX_VALUE);
                     if (!InputValidator.isHashValid(fileHash)) {
-                        Out.warn("Hash not valid for file Example: \"file/path\": {\"hash\": \"not valid here\"}" + path);
+                        warn("Hash not valid for file Example: \"file/path\": {\"hash\": \"not valid here\"}" + path);
                         continue;
                     }
 
@@ -241,7 +241,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                     }
 
                     if (dynamicFiles.containsKey(path)) {
-                        Out.warn("File from pack " + pack.getName() + " duplicates in multiple content packs: " + path);
+                        warn("File duplicates in multiple content packs: " + path);
                         updateSize -= dynamicFiles.get(path).getSize();
                         isNeedOverwrite = true;
                     }
@@ -256,9 +256,11 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
                 } catch (Exception e) {
                     String errorFileName = pathValidated ? _relativePath : "(failed to validate)";
-                    Out.error("Error while process file " + errorFileName + " in pack...", e);
+                    error("Error while process file " + errorFileName + " in pack...", e);
                 }
             }
+            
+            println("Total initialized files in content '" + id + "': " + processedFiles);
         });
     }
 
@@ -267,7 +269,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
         NetworkStat.speedMultiplier = DOWNLOAD_THREADS_COUNT;
         Path tempPath;
         if (pack.isZip()) {
-            tempPath = new File(System.getProperty("java.io.tmpdir") + "/minecraft/mods/dynamicpack/temp/" + pack.getName()).toPath();
+            tempPath = new File(System.getProperty("java.io.tmpdir") + File.pathSeparator + SharedConstrains.TEMP_DIR_NAME + pack.getName()).toPath();
             if (!Files.exists(tempPath)) {
                 PathsUtil.createDirsToFile(tempPath);
                 Files.createDirectory(tempPath);
@@ -289,7 +291,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                             }
                             return file;
                         }, executor).exceptionally(th -> {
-                            Out.error("Error while download a file", th);
+                            error("Error while download a file", th);
                             return null;
                         });
 
@@ -308,7 +310,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
             if (th == null) {
                 for (DynamicFile file : files) {
                     if (file == null || file.getDownloadedPath() == null) {
-                        Out.warn("DynamicFile null or downloadPath null in whenComplete...");
+                        warn("DynamicFile null or downloadPath null in whenComplete...");
                         continue;
                     }
                     markReloadRequired(file);
@@ -324,7 +326,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                             PathsUtil.nioSmartDelete(source);
 
                         } catch (Exception e) {
-                            Out.error("Error while moving file " + file.getPath() + " from temp", e);
+                            error("Error while moving file " + file.getPath() + " from temp", e);
                         }
                     }
                 }
@@ -342,13 +344,13 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
         // block to remotely patch a client file dynamicmcpack.json
         if (filePath.getFileName().toString().contains(SharedConstrains.CLIENT_FILE)) {
-            Out.warn("File " + SharedConstrains.CLIENT_FILE + " in pack " + pack.getName() + " can't be updated remotely!");
+            warn("File " + SharedConstrains.CLIENT_FILE + " can't be updated remotely!");
             return;
         }
 
         if (PathsUtil.isPathFileExists(filePath)) {
             if (Hashes.sha1sum(filePath).equalsIgnoreCase(dynamicFile.getHash())) {
-                Out.warn("File " + dynamicFile.getPath() + " not downloaded(shadow): already exists with equals hashes!");
+                warn("File " + dynamicFile.getPath() + " not downloaded(shadow): already exists with equals hashes!");
                 dynamicFile.setDownloadPath(filePath);
                 downloadedSize += Files.size(filePath);
                 return;
@@ -373,6 +375,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
         });
 
         if (interrupted) {
+            progress.setPhase("Interrupted");
             return;
         }
         dynamicFile.setDownloadPath(filePath);
@@ -382,11 +385,11 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
     private ExecutorService getExecutor() {
         return Executors.newFixedThreadPool(DOWNLOAD_THREADS_COUNT, new ThreadFactory() {
             int count = 1;
-            final int executor = (executorCounter++);
+            final int executorNum = (executorCounter++);
 
             @Override
             public Thread newThread(@NotNull Runnable runnable) {
-                return new Thread(runnable, "DownloadWorker"+executor+"-" + count++);
+                return new Thread(runnable, "DownloadWorker"+ executorNum +"-" + count++);
             }
         });
     }
@@ -453,7 +456,20 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
     private void debug(String s) {
         if (SharedConstrains.DEBUG) {
-            Out.debug("{%s} %s".formatted(pack.getName(), s));
+            pack.debug(s);
         }
+    }
+
+    private void error(String s, Throwable e) {
+        pack.error(s, e);
+    }
+
+    private void warn(String s) {
+        pack.warn(s);
+    }
+
+
+    private void println(String s) {
+        pack.println(s);
     }
 }

@@ -67,7 +67,7 @@ public class DynamicResourcePack extends AbstractPack {
                 } catch (Exception e) {
                     isSyncing = false;
                     setLatestException(e);
-                    Out.error("Pack " + getName() + " error while doUpdate (or init) SyncBuilder", e);
+                    error("Error while doUpdate (or init) SyncBuilder", e);
                 }
                 return def;
             }
@@ -113,7 +113,7 @@ public class DynamicResourcePack extends AbstractPack {
                         setLatestException(null);
 
                     } catch (Exception e2) {
-                        Out.error("Error while check safe pack meta", e2);
+                        error("Error while check safe pack meta", e2);
                         setLatestException(e2);
                     }
                     isSyncing = false;
@@ -255,7 +255,7 @@ public class DynamicResourcePack extends AbstractPack {
             return DynamicPackMod.getInstance().checkResourcePackMetaValid(s);
 
         } catch (Exception e) {
-            Out.error("Error while check meta valid.", e);
+            error("Error while check meta valid.", e);
             return false;
         }
     }
@@ -297,9 +297,21 @@ public class DynamicResourcePack extends AbstractPack {
     }
 
 
-    private void debug(String s) {
+    public void debug(String s) {
         if (SharedConstrains.DEBUG) {
             Out.debug("{%s} %s".formatted(getName(), s));
         }
+    }
+
+    public void error(String s, Throwable e) {
+        Out.error("{%s} %s".formatted(getName(), s), e);
+    }
+
+    public void warn(String s) {
+        Out.warn("{%s} %s".formatted(getName(), s));
+    }
+
+    public void println(String s) {
+        Out.println("{%s} %s".formatted(getName(), s));
     }
 }

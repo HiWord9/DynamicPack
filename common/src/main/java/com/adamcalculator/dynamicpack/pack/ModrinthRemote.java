@@ -87,7 +87,7 @@ public class ModrinthRemote extends Remote {
             @Override
             public boolean doUpdate(SyncProgress progress) throws Exception {
                 if (!isUpdateAvailable()) {
-                    Out.warn("Call doUpdate in modrinth-remote when update not available");
+                    warn("Call doUpdate in modrinth-remote when update not available");
                     return false;
                 }
 
@@ -181,7 +181,6 @@ public class ModrinthRemote extends Remote {
 
     public JsonObject parseModrinthLatestVersionJson() throws IOException {
         String content = Urls.parseTextContent(getApiVersionsUrl(), SharedConstrains.MOD_MODTINTH_API_LIMIT);
-        Out.println(content);
         JsonArray versions = JsonUtils.arrayFromString(content);
         for (JsonElement o : versions) {
             JsonObject version = (JsonObject) o;
@@ -214,15 +213,15 @@ public class ModrinthRemote extends Remote {
 
     private boolean _isUpdateAvailable(JsonObject latest) {
         if (latest == null) {
-            Out.warn("Latest version of " + parent.getLocation().getName() + " not available for this game_version");
+            warn("Latest version not available for this game_version");
             return false;
         }
         if (JsonUtils.optString(latest, "version_number", "").equals(getCurrentVersionNumber())) {
-            Out.debug("Version number equal. Update not available");
+            debug("Version number equal. Update not available");
             return false;
         }
         var id = JsonUtils.getString(latest, "id");
-        Out.debug("Version remote.id="+id + "; current=" + getCurrentUnique());
+        debug("Version remote.id="+id + "; current=" + getCurrentUnique());
 
         return !getCurrentUnique().equals(id);
     }
@@ -272,5 +271,13 @@ public class ModrinthRemote extends Remote {
             }
             throw new NoSuchElementException("File json-object with primary=true not found... Modrinth API???");
         }
+    }
+
+    public void debug(String s) {
+        parent.debug(s);
+    }
+
+    public void warn(String s) {
+        parent.warn(s);
     }
 }
