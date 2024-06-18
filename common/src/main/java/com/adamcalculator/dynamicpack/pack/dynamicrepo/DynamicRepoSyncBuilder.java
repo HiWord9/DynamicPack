@@ -132,7 +132,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                     }
                     progress.deleted(pathToFile);
                     PathsUtil.nioSmartDelete(pathToFile);
-                    markReloadRequired();
+                    markReloadRequired(s);
                 }
             }
 
@@ -240,11 +240,13 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                         isNeedOverwrite = true;
                     }
 
+                    if (dynamicFiles.containsKey(path)) {
+                        Out.warn("File from pack " + pack.getName() + " duplicates in multiple content packs: " + path);
+                        updateSize -= dynamicFiles.get(path).getSize();
+                        isNeedOverwrite = true;
+                    }
+
                     if (isNeedOverwrite) {
-                        if (dynamicFiles.containsKey(path)) {
-                            Out.warn("File from pack " + pack.getName() + " duplicates in multiple content packs: " + path);
-                            updateSize -= dynamicFiles.get(path).getSize();
-                        }
                         DynamicFile dynamicFile = new DynamicFile(fileRemoteUrl, path, fileSize, fileHash);
                         updateSize += fileSize;
                         dynamicFiles.put(path, dynamicFile);
@@ -309,7 +311,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                         Out.warn("DynamicFile null or downloadPath null in whenComplete...");
                         continue;
                     }
-                    markReloadRequired();
+                    markReloadRequired(file);
 
                     if (tempPath != null) {
                         try {
@@ -369,19 +371,22 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                 return interrupted;
             }
         });
+
         if (interrupted) {
             return;
         }
         dynamicFile.setDownloadPath(filePath);
+        progress.setPhase("File " + dynamicFile.getPath() + " downloaded!");
     }
 
     private ExecutorService getExecutor() {
         return Executors.newFixedThreadPool(DOWNLOAD_THREADS_COUNT, new ThreadFactory() {
             int count = 1;
+            final int executor = (executorCounter++);
 
             @Override
             public Thread newThread(@NotNull Runnable runnable) {
-                return new Thread(runnable, "DownloadWorker"+(executorCounter++)+"-" + count++);
+                return new Thread(runnable, "DownloadWorker"+executor+"-" + count++);
             }
         });
     }
@@ -439,9 +444,9 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
         return isReloadRequired;
     }
 
-    private void markReloadRequired() {
+    private void markReloadRequired(Object object) {
         if (!isReloadRequired) {
-            debug("Now reload is required in " + this);
+            debug("Now reload is required because " + object);
         }
         this.isReloadRequired = true;
     }

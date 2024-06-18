@@ -34,7 +34,6 @@ public class SyncingTask {
         }
         var mod = DynamicPackMod.getInstance();
         setSyncing(true);
-        mod.rescanPacks();
         mod.blockRescan(true);
         log("[SyncingTask] launchTaskAsSyncing start!");
         runnable.run();

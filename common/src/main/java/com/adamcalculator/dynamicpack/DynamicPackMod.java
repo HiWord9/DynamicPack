@@ -54,6 +54,8 @@ public abstract class DynamicPackMod {
 		Out.init(loader);
 		Out.println("Mod version: " + SharedConstrains.VERSION_NAME + " build: " + SharedConstrains.VERSION_BUILD);
 		this.packsContainer = new PacksContainer();
+		this.packsContainer.rescan(resourcePacks);
+
 		this.gameStartSyncing = new GameStartSyncing();
 		if (Config.getInstance().isAutoUpdateAtLaunch()) {
 			this.gameStartSyncing.start();
