@@ -22,8 +22,10 @@ public class PathsUtil {
      * Delete path-file and log
      */
     public static void delete(Path path) throws IOException {
-        Files.delete(path);
-        FilesLog.deleted(path);
+        if (Files.exists(path)) {
+            Files.delete(path);
+            FilesLog.deleted(path);
+        }
     }
 
     /**

@@ -9,6 +9,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Container supported packs
@@ -55,7 +56,7 @@ public class PacksContainer {
         List<String> forDelete = new ArrayList<>(packs.keySet());
         for (File packFile : PathsUtil.listFiles(directoryToCheck)) {
             DynamicResourcePack currentDynamicPack = DynamicPackMod.getDynamicPackByMinecraftName("file/" + packFile.getName());
-            if (currentDynamicPack.isSyncing()) {
+            if (Objects.nonNull(currentDynamicPack) && currentDynamicPack.isSyncing()) {
                 Out.warn("WARNING: Found a pack that is now synchronizing. skipping this pack");
                 continue;
             }

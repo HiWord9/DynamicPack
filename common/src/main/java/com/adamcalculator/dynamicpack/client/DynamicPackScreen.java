@@ -131,7 +131,7 @@ public class DynamicPackScreen extends Screen {
                 48, 20, width - 120 + 54, 35
         ));
         if (!DynamicPackMod.isResourcePackActive(pack) && Config.getInstance().isUpdateOnlyEnabledPacks()) {
-            syncButtonAll.setTooltip(Tooltip.create(Component.translatable("dynamicpack.screen.pack.manually_sync.all.warningNotInclude")));
+            syncButtonAll.setTooltip(Tooltip.create(Component.translatable("dynamicpack.screen.pack.manually_sync.all.warningNotInclude").withStyle(ChatFormatting.RED)));
         }
 
         hideSyncSpecButtons();

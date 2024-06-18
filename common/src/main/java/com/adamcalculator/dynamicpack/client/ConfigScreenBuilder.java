@@ -53,7 +53,7 @@ public class ConfigScreenBuilder {
     private static ConfigCategory buildDebugCategory() {
         return ConfigCategory.createBuilder()
                 .name(Component.translatable("dynamicpack.screen.config.category.debug"))
-                .name(Component.translatable("dynamicpack.screen.config.category.debug.description"))
+                .tooltip(Component.translatable("dynamicpack.screen.config.category.debug.description").withStyle(ChatFormatting.RED))
                 .group(OptionGroup.createBuilder()
                         .name(Component.literal("Calculator's category ^_^"))
                         .option(Option.<Boolean>createBuilder()
