@@ -15,8 +15,8 @@ public class SharedConstrains {
 
 
     public static final boolean DEBUG = true; // Don't forget to disable in release
-    public static final long VERSION_BUILD = 32;
-    public static final String VERSION_NAME_MOD = "1.0.32";
+    public static final long VERSION_BUILD = 33;
+    public static final String VERSION_NAME_MOD = "1.0.33";
     public static final String VERSION_NAME_BRANCH = "mc1.20";
     public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH + (DEBUG ? "-debug" : "");
     public static final String MOD_ID = "dynamicpack";
