@@ -28,6 +28,7 @@ public class DynamicResourcePack extends AbstractPack {
     private final List<Consumer<DynamicResourcePack>> destroyListeners = new ArrayList<>();
     private boolean isSyncing = false; // currently syncing
     private boolean destroyed = false; // destroyed
+    private SyncBuilder activeSyncBuilder;
 
 
     public DynamicResourcePack(File location, JsonObject json) {
@@ -50,6 +51,7 @@ public class DynamicResourcePack extends AbstractPack {
      */
     public SyncBuilder syncBuilder() {
         return new SyncBuilder() {
+            // builder from remote
             private SyncBuilder builder;
 
             private void wrapThrowable(ThrowingFunction<Exception> fun) {
@@ -73,12 +75,14 @@ public class DynamicResourcePack extends AbstractPack {
             @Override
             public void init(boolean ignoreCaches) {
                 isSyncing = true;
+                activeSyncBuilder = this;
                 wrapThrowable(() -> {
                     checkNetwork();
                     builder = remote.syncBuilder();
                     builder.init(ignoreCaches);
                 });
                 isSyncing = false;
+                activeSyncBuilder = null;
             }
 
             @Override
@@ -100,8 +104,8 @@ public class DynamicResourcePack extends AbstractPack {
             @Override
             public boolean doUpdate(SyncProgress progress) {
                 SyncingTask.currentPackName = getName();
-
                 return wrapThrowableRet(() -> {
+                    activeSyncBuilder = this;
                     isSyncing = true;
                     boolean b = builder.doUpdate(progress);
                     try {
@@ -113,8 +117,15 @@ public class DynamicResourcePack extends AbstractPack {
                         setLatestException(e2);
                     }
                     isSyncing = false;
+                    activeSyncBuilder = null;
+
                     return b;
                 }, false);
+            }
+
+            @Override
+            public void interrupt() {
+                builder.interrupt();
             }
         };
     }
@@ -124,7 +135,7 @@ public class DynamicResourcePack extends AbstractPack {
      */
     public void saveClientFile() {
         try {
-            PackUtil.openPackFileSystem(getLocation(), PackUtil.createMcPackFinalizerRunnable(this), this::saveClientFile);
+            PackUtil.openPackFileSystem(getLocation(), LockUtils.createFileFinalizer(getLocation()), this::saveClientFile);
 
         } catch (Exception e) {
             throw new RuntimeException("saveClientFile failed.", e);
@@ -279,6 +290,11 @@ public class DynamicResourcePack extends AbstractPack {
         this.destroyed = true;
     }
 
+    private void interrupt() {
+        if (activeSyncBuilder != null) {
+            activeSyncBuilder.interrupt();
+        }
+    }
 
 
     private void debug(String s) {

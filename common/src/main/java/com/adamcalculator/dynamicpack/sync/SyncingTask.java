@@ -78,6 +78,7 @@ public class SyncingTask {
             private final Set<SyncBuilder> builders = new HashSet<>();
             private boolean updateAvailable;
             private long totalSize;
+            private boolean interrupted;
 
 
             @Override
@@ -85,6 +86,10 @@ public class SyncingTask {
                 clearLog();
 
                 for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
+                    if (interrupted) {
+                        return;
+                    }
+
                     if (Config.getInstance().isUpdateOnlyEnabledPacks()) {
                         boolean enabled = DynamicPackMod.getInstance().isResourcePackActive(pack);
                         if (!enabled) {
@@ -128,6 +133,10 @@ public class SyncingTask {
             public boolean doUpdate(SyncProgress progress) throws Exception {
                 boolean reload = false;
                 for (SyncBuilder syncBuilder : builders) {
+                    if (interrupted) {
+                        return false;
+                    }
+
                     if (syncBuilder.isUpdateAvailable()) {
                         boolean rel = syncBuilder.doUpdate(progress);
                         if (rel) {
@@ -136,6 +145,14 @@ public class SyncingTask {
                     }
                 }
                 return reload;
+            }
+
+            @Override
+            public void interrupt() {
+                interrupted = true;
+                for (SyncBuilder builder : builders) {
+                    builder.interrupt();
+                }
             }
         };
     }

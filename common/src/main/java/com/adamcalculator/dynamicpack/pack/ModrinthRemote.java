@@ -55,6 +55,7 @@ public class ModrinthRemote extends Remote {
     @Override
     public SyncBuilder syncBuilder() {
         return new SyncBuilder() {
+            private UrlsController urlsController;
             private LatestModrinthVersion latest;
             private JsonObject latestJson;
             private long downloaded;
@@ -96,14 +97,17 @@ public class ModrinthRemote extends Remote {
                 File tempFile = null;
                 int attempts = SharedConstrains.MAX_ATTEMPTS_TO_DOWNLOAD_FILE;
                 while (attempts > 0) {
-                    tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_download", ".zip", SharedConstrains.MODRINTH_HTTPS_FILE_SIZE_LIMIT, new FileDownloadConsumer() {
+                    tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_download", ".zip", SharedConstrains.MODRINTH_HTTPS_FILE_SIZE_LIMIT, urlsController = new UrlsController() {
                         @Override
-                        public void onUpdate(FileDownloadConsumer it) {
+                        public void onUpdate(UrlsController it) {
                             float percentage = it.getPercentage();
                             progress.downloading(fileName, percentage);
                             downloaded = getLatest();
                         }
                     });
+                    if (urlsController.isInterrupted()) {
+                        return false;
+                    }
 
                     if (Hashes.sha1sum(tempFile).equals(latest.fileHash)) {
                         break;
@@ -125,7 +129,9 @@ public class ModrinthRemote extends Remote {
                 PackUtil.openPackFileSystem(tempFile, packRootPath -> parent.saveClientFile(packRootPath));
 
                 if (parent.isZip()) {
-                    PackUtil.closeFiles(parent.getLocation());
+                    progress.setPhase("Unlocking file.");
+                    LockUtils.closeFile(parent.getLocation());
+
                     progress.setPhase("Move files...");
                     PathsUtil.moveFile(tempFile, parent.getLocation());
 
@@ -141,6 +147,13 @@ public class ModrinthRemote extends Remote {
                 parent.saveClientFile();
                 progress.setPhase("Success");
                 return true;
+            }
+
+            @Override
+            public void interrupt() {
+                if (urlsController != null) {
+                    urlsController.interrupt();
+                }
             }
         };
     }

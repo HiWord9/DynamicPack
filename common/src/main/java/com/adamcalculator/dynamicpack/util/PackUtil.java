@@ -1,10 +1,8 @@
 package com.adamcalculator.dynamicpack.util;
 
 import com.adamcalculator.dynamicpack.SharedConstrains;
-import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Closeable;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -13,15 +11,9 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.LongConsumer;
+import java.util.*;
 
 public class PackUtil {
-    private static final List<OpenedFile> OPENED_ZIP_FILES = new ArrayList<>();
-    
     public static void openPackFileSystem(File file, ThrowingConsumer<Exception, Path> consumer) throws Exception {
         openPackFileSystem(file, null, consumer);
     }
@@ -30,6 +22,7 @@ public class PackUtil {
      * Open file (or dir) as nio.Path
      * <p>If exception in consumer filesystem closed normally</p>
      * @param file resourcepack file
+     * @param preClose preClose runnable. See LockUtils...
      * @param consumer path consumer
      * @throws Exception any exception
      */
@@ -78,7 +71,7 @@ public class PackUtil {
      * Download file for dynamic_repo
      * @throws IOException if latest attempt failed exception rethrown
      */
-    public static void downloadPackFile(String url, Path path, String hash, LongConsumer progress) throws IOException {
+    public static void downloadPackFile(String url, Path path, String hash, UrlsController controller) throws IOException {
         final int maxI = SharedConstrains.MAX_ATTEMPTS_TO_DOWNLOAD_FILE;
         int i = maxI;
         while (i > 0) {
@@ -91,7 +84,7 @@ public class PackUtil {
                 PathsUtil.createFile(path);
 
                 try {
-                    Urls._transferStreamsWithHash(hash, Urls._getInputStreamOfUrl(url, SharedConstrains.DYNAMIC_PACK_HTTPS_FILE_SIZE_LIMIT, progress), Files.newOutputStream(path), progress);
+                    Urls._transferStreamsWithHash(hash, Urls._getInputStreamOfUrl(url, SharedConstrains.DYNAMIC_PACK_HTTPS_FILE_SIZE_LIMIT, controller), Files.newOutputStream(path), controller);
                     FilesLog.writtenByUrl(path, url);
 
                 } catch (Exception e) {
@@ -107,66 +100,6 @@ public class PackUtil {
             }
 
             i--;
-        }
-    }
-
-    public static Runnable createMcPackFinalizerRunnable(DynamicResourcePack dynamicResourcePack) {
-        return () -> {
-            File resourcepack = dynamicResourcePack.getLocation();
-            closeFiles(resourcepack);
-        };
-    }
-
-    public static void closeFiles(File file) {
-        Out.debug("[PackUtil] closeFiles file=" + file);
-
-        List<OpenedFile> toClose = findAllOpenedFiles(file);
-        for (OpenedFile openedFile : toClose) {
-            openedFile.close();
-        }
-        
-        OPENED_ZIP_FILES.removeAll(toClose);
-    }
-
-    public static void markClosedFile(File file) {
-        Out.debug("[PackUtil] markClosedFile file=" + file);
-        List<OpenedFile> toRemove = findAllOpenedFiles(file);
-        OPENED_ZIP_FILES.removeAll(toRemove);
-    }
-
-    public static void addFileToOpened(File file, AutoCloseable closeable) {
-        Out.debug("[PackUtil] addFileToOpen file=" + file);
-        OPENED_ZIP_FILES.add(new OpenedFile(file, closeable));
-    }
-
-    private static List<OpenedFile> findAllOpenedFiles(File file) {
-        List<OpenedFile> found = new ArrayList<>();
-
-        for (OpenedFile openedFile : OPENED_ZIP_FILES.toArray(new OpenedFile[0])) {
-            if (openedFile.file.equals(file)) {
-                found.add(openedFile);
-            }
-        }
-
-        return found;
-    }
-    
-    private static class OpenedFile implements Closeable {
-        File file;
-        AutoCloseable closeable;
-        
-        public OpenedFile(File file, AutoCloseable closeable) {
-            this.file = file;
-            this.closeable = closeable;
-        }
-
-        public void close() {
-            Out.debug("[PackUtil] [OpenedFile] close() file=" + file.getName() + "; closable=" + closeable);
-            try {
-                closeable.close();
-            } catch (Exception e) {
-                Out.debug("Error while close.. ignore it he " + e);
-            }
         }
     }
 }

@@ -3,13 +3,13 @@ package com.adamcalculator.dynamicpack.util;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.InputValidator;
 import com.adamcalculator.dynamicpack.SharedConstrains;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.util.function.LongConsumer;
 import java.util.zip.GZIPInputStream;
 
 
@@ -38,7 +38,7 @@ public class Urls {
      * @param url url
      * @param progress progress
      */
-    public static String parseTextContent(String url, long limit, LongConsumer progress) throws IOException {
+    public static String parseTextContent(String url, long limit, UrlsController progress) throws IOException {
         return _parseTextFromStream(_getInputStreamOfUrl(url, limit, progress), progress);
     }
 
@@ -47,7 +47,7 @@ public class Urls {
      * Parse GZip compressed content from url
      * @param url url
      */
-    public static String parseTextGZippedContent(String url, long limit, LongConsumer progress) throws IOException {
+    public static String parseTextGZippedContent(String url, long limit, UrlsController progress) throws IOException {
         return _parseTextFromStream(new GZIPInputStream(_getInputStreamOfUrl(url, limit, progress)), progress);
     }
 
@@ -55,12 +55,12 @@ public class Urls {
     /**
      * Create temp zipFile and download to it from url.
      */
-    public static File downloadFileToTemp(String url, String tmpPrefix, String tmpSuffix, long limit, LongConsumer progress) throws IOException {
+    public static File downloadFileToTemp(String url, String tmpPrefix, String tmpSuffix, long limit, UrlsController controller) throws IOException {
         File file = File.createTempFile(tmpPrefix, tmpSuffix);
 
-        var inputStream = _getInputStreamOfUrl(url, limit, progress);
+        var inputStream = _getInputStreamOfUrl(url, limit, controller);
         var outputStream = Files.newOutputStream(file.toPath());
-        _transferStreams(inputStream, outputStream, progress);
+        _transferStreams(inputStream, outputStream, controller);
 
         return file;
     }
@@ -69,7 +69,7 @@ public class Urls {
     /**
      * Getting InputStream of url with checks
      */
-    protected static InputStream _getInputStreamOfUrl(String url, long sizeLimit, /*@Nullable*/ LongConsumer progress) throws IOException {
+    protected static InputStream _getInputStreamOfUrl(String url, long sizeLimit, @Nullable UrlsController controller) throws IOException {
         if (url.contains(" ")) {
             throw new IOException("URL can't contains spaces!");
         }
@@ -83,9 +83,6 @@ public class Urls {
 
             final File gameDir = DynamicPackMod.getGameDir();
             File file = new File(gameDir, url.replace("file_debug_only://", ""));
-            if (progress != null){
-                progress.accept(file.length());
-            }
             return new FileInputStream(file);
 
 
@@ -95,11 +92,11 @@ public class Urls {
             }
 
             throwIsUrlNotTrust(url);
-            return __unsafeInputStreamFromUrl(url, sizeLimit, progress);
+            return __unsafeInputStreamFromUrl(url, sizeLimit, controller);
 
         } else if (url.startsWith("https://")) {
             throwIsUrlNotTrust(url);
-            return __unsafeInputStreamFromUrl(url, sizeLimit, progress);
+            return __unsafeInputStreamFromUrl(url, sizeLimit, controller);
 
         } else {
             throw new RuntimeException("Unsupported scheme for url " + url);
@@ -110,7 +107,7 @@ public class Urls {
      * # Do not use!
      * This method return InputStream of url WITHOUT any checks, except sizeLimit
      */
-    private static InputStream __unsafeInputStreamFromUrl(String url, long sizeLimit, /*@Nullable*/ LongConsumer progress) throws IOException {
+    private static InputStream __unsafeInputStreamFromUrl(String url, long sizeLimit, @Nullable UrlsController controller) throws IOException {
         // +-approximate amount spent on this request
         long size = SharedConstrains.HTTP_MINIMAL_HEADER_SIZE + url.length();
 
@@ -122,21 +119,25 @@ public class Urls {
             if (length > sizeLimit) {
                 throw new RuntimeException("File size file exceeds limit " + length + "bytes > " + sizeLimit + "bytes. url=" + url);
             }
-            if (progress != null){
-                progress.accept(length);
-                progress.accept(0);
+            if (controller != null) {
+                controller.updateMax(length);
             }
             return connection.getInputStream();
         });
     }
 
-    protected static String _parseTextFromStream(InputStream stream, /* Nullable */ LongConsumer progress) throws IOException {
+    protected static String _parseTextFromStream(InputStream stream, @Nullable UrlsController controller) throws IOException {
+        boolean isNetwork = isNetwork(stream);
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         byte[] dataBuffer = new byte[SharedConstrains.URLS_BUFFER_SIZE];
         int bytesRead;
         long total = 0;
         while (true) {
+            if (UrlsController.isInterrupted(controller)) {
+                Out.warn("interrupted _parseTextFromStream");
+                return null;
+            }
             long startTime = System.currentTimeMillis();
             if ((bytesRead = stream.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
                 break;
@@ -145,12 +146,12 @@ public class Urls {
             byteArrayOutputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
 
-            if (progress != null) {
-                progress.accept(total);
-            }
+            UrlsController.updateCurrent(controller, total);
 
-            SharedConstrains.debugNetwork(bytesRead, total);
-            NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
+            if (isNetwork) {
+                SharedConstrains.debugNetwork(bytesRead, total);
+                NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
+            }
         }
         String s = byteArrayOutputStream.toString(StandardCharsets.UTF_8);
         byteArrayOutputStream.close();
@@ -161,24 +162,25 @@ public class Urls {
     /**
      * Transfer streams and close all
      */
-    private static void _transferStreams(InputStream inputStream, OutputStream outputStream, /*@Nullable*/ LongConsumer progress) throws IOException {
-        boolean isNetwork = !(inputStream instanceof ByteArrayInputStream); // may other check?, but only for debug...
+    private static void _transferStreams(InputStream inputStream, OutputStream outputStream, @Nullable UrlsController controller) throws IOException {
+        boolean isNetwork = isNetwork(inputStream);
 
         BufferedInputStream in = new BufferedInputStream(inputStream);
         byte[] dataBuffer = new byte[SharedConstrains.URLS_BUFFER_SIZE];
         int bytesRead;
         long total = 0;
         while (true) {
-            long startTime = System.currentTimeMillis();
+            if (UrlsController.isInterrupted(controller)) {
+                Out.debug("interrupted _transferStreams");
+                return;
+            }
+             long startTime = System.currentTimeMillis();
             if ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
                 break;
             }
             outputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
-            if (progress != null) {
-                progress.accept(total);
-            }
-
+            UrlsController.updateCurrent(controller, total);
 
             if (isNetwork) {
                 SharedConstrains.debugNetwork(bytesRead, total);
@@ -193,9 +195,8 @@ public class Urls {
         inputStream.close();
     }
 
-    protected static void _transferStreamsWithHash(String hash, InputStream inputStream, OutputStream outputStream, LongConsumer progress) throws IOException {
-        boolean isNetwork = !(inputStream instanceof ByteArrayInputStream); // may other check?, but only for debug...
-
+    protected static void _transferStreamsWithHash(String hash, InputStream inputStream, OutputStream outputStream, @Nullable UrlsController controller) throws IOException {
+        boolean isNetwork = isNetwork(inputStream);
 
         BufferedInputStream in = new BufferedInputStream(inputStream);
         ByteArrayOutputStream tempBufferOutputStream = new ByteArrayOutputStream();
@@ -204,13 +205,18 @@ public class Urls {
         int bytesRead;
         long total = 0;
         while (true) {
+            if (UrlsController.isInterrupted(controller)) {
+                Out.debug("Interrupted _transferStreamsWithHash");
+                return;
+            }
+
             long startTime = System.currentTimeMillis();
             if ((bytesRead = in.read(dataBuffer, 0, SharedConstrains.URLS_BUFFER_SIZE)) == -1) {
                 break;
             }
             tempBufferOutputStream.write(dataBuffer, 0, bytesRead);
             total += bytesRead;
-            progress.accept(total);
+            UrlsController.updateCurrent(controller, total);
             if (isNetwork) {
                 SharedConstrains.debugNetwork(bytesRead, total);
                 NetworkStat.addLap(System.currentTimeMillis() - startTime, bytesRead);
@@ -227,6 +233,10 @@ public class Urls {
         }
 
         throw new SecurityException("Hash of pre-downloaded to buffer file not equal: expected: " + hash + "; actual: " + hashOfDownloaded);
+    }
+
+    private static boolean isNetwork(InputStream is) {
+        return !(is instanceof ByteArrayInputStream);
     }
 
     private static void throwIsUrlNotTrust(String url) throws IOException {

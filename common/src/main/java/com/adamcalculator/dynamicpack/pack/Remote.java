@@ -3,6 +3,7 @@ package com.adamcalculator.dynamicpack.pack;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
 import com.google.gson.JsonObject;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -35,4 +36,6 @@ public abstract class Remote {
 
     public abstract boolean checkUpdateAvailable() throws IOException;
 
+    @ApiStatus.OverrideOnly
+    public void interrupt() {}
 }

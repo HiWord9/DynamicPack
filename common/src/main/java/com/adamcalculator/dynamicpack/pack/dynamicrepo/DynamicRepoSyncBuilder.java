@@ -21,7 +21,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-public class DynamicRepoSyncBuilder extends SyncBuilder {
+public class DynamicRepoSyncBuilder implements SyncBuilder {
     public static int DOWNLOAD_THREADS_COUNT = 8;
     private static int executorCounter = 0;
 
@@ -37,6 +37,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     private JsonObject repoJson; // remote repo json (dynamicmcpack.repo.json)
 
     private boolean isReloadRequired;
+    private boolean interrupted;
 
     public DynamicRepoSyncBuilder(DynamicResourcePack pack, DynamicRepoRemote dynamicRepoRemote) {
         this.pack = pack;
@@ -117,7 +118,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
     @Override
     public boolean doUpdate(SyncProgress progress) throws Exception {
         progress.setPhase("Opening a pack file-system");
-        PackUtil.openPackFileSystem(pack.getLocation(), PackUtil.createMcPackFinalizerRunnable(pack), packFileSystem -> {
+        PackUtil.openPackFileSystem(pack.getLocation(), LockUtils.createFileFinalizer(pack.getLocation()), packFileSystem -> {
             internalProcessDynamicFiles(progress, packFileSystem);
 
             debug("DELETE LIST: " + oldestFilesList);
@@ -142,6 +143,11 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
         });
         progress.setPhase("Success");
         return isReloadRequired();
+    }
+
+    @Override
+    public void interrupt() {
+        this.interrupted = true;
     }
 
     @Override
@@ -180,7 +186,7 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
 
         // content.json
         JsonObject jsonContentD2 = JsonUtils.fromString(content);
-        PackUtil.openPackFileSystem(remote.parent.getLocation(), PackUtil.createMcPackFinalizerRunnable(pack), (packFileSystem) -> {
+        PackUtil.openPackFileSystem(remote.parent.getLocation(), LockUtils.createFileFinalizer(pack.getLocation()), (packFileSystem) -> {
             long formatVersion;
             if ((formatVersion = JsonUtils.getLong(jsonContentD2, "formatVersion")) != 1) {
                 throw new RuntimeException("Incompatible formatVersion: " + formatVersion);
@@ -293,6 +299,10 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
 
 
         }).whenComplete((files, th) -> {
+            if (interrupted) {
+                return;
+            }
+
             if (th == null) {
                 for (DynamicFile file : files) {
                     if (file == null || file.getDownloadedPath() == null) {
@@ -343,17 +353,25 @@ public class DynamicRepoSyncBuilder extends SyncBuilder {
             }
         }
 
-        PackUtil.downloadPackFile(dynamicFile.getUrl(), filePath, dynamicFile.getHash(), new FileDownloadConsumer() {
+        PackUtil.downloadPackFile(dynamicFile.getUrl(), filePath, dynamicFile.getHash(), new UrlsController() {
             private long fileSize = 0;
 
             @Override
-            public void onUpdate(FileDownloadConsumer it) {
+            public void onUpdate(UrlsController it) {
                 progress.downloading(filePath.getFileName().toString(), it.getPercentage());
                 downloadedSize -= fileSize;
                 fileSize = it.getLatest();
                 downloadedSize += fileSize;
             }
+
+            @Override
+            public boolean isInterrupted() {
+                return interrupted;
+            }
         });
+        if (interrupted) {
+            return;
+        }
         dynamicFile.setDownloadPath(filePath);
     }
 

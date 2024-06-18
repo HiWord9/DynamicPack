@@ -4,30 +4,35 @@ package com.adamcalculator.dynamicpack.sync;
 /**
  * SyncBuilder
  */
-public abstract class SyncBuilder {
+public interface SyncBuilder {
     /**
      * Initialize a SyncBuilder, cache updateAvailable status, update size, etc...
      */
-    public abstract void init(boolean ignoreCaches) throws Exception;
+    void init(boolean ignoreCaches) throws Exception;
 
     /**
      * @return downloaded size
      */
-    public abstract long getDownloadedSize();
+    long getDownloadedSize();
 
     /**
      * @return cached in init() value
      */
-    public abstract boolean isUpdateAvailable();
+    boolean isUpdateAvailable();
 
     /**
      * @return calculated and cached in init() value
      */
-    public abstract long getUpdateSize();
+    long getUpdateSize();
 
     /**
      * Update pack
      * @return is needed a reload
      */
-    public abstract boolean doUpdate(SyncProgress progress) throws Exception;
+    boolean doUpdate(SyncProgress progress) throws Exception;
+
+    /**
+     * Stop update
+     */
+    void interrupt();
 }
