@@ -20,7 +20,7 @@ public class SyncingTask {
     @NotNull private static String syncingLog2 = "";
     @NotNull private static String syncingLog3 = "";
     public static long eta;
-    public static SyncBuilder currentRootSyncBuilder;
+    public static SyncBuilder currentRootSyncBuilder; // used in future for interrupt() download. Sets by Thread
     @Nullable public static String currentPackName;
 
 
@@ -32,15 +32,19 @@ public class SyncingTask {
         if (isSyncing()) {
             throw new RuntimeException("Failed to launchTaskAsSyncing. Other task currently working...");
         }
-        var mod = DynamicPackMod.getInstance();
+
+        var packs = DynamicPackMod.getPacksContainer();
         setSyncing(true);
-        mod.blockRescan(true);
+        packs.lockRescan();
+
         log("[SyncingTask] launchTaskAsSyncing start!");
         runnable.run();
         log("[SyncingTask] launchTaskAsSyncing end!");
+
         setSyncing(false);
-        mod.blockRescan(false);
+        packs.unlockRescan();
         SyncingTask.currentPackName = null;
+        SyncingTask.currentRootSyncBuilder = null;
     }
 
     public static void log(String s) {
@@ -84,13 +88,13 @@ public class SyncingTask {
             public void init(boolean ignoreCaches) throws Exception {
                 clearLog();
 
-                for (DynamicResourcePack pack : DynamicPackMod.getPacks()) {
+                for (DynamicResourcePack pack : DynamicPackMod.getPacksContainer().getPacks()) {
                     if (interrupted) {
                         return;
                     }
 
                     if (Config.getInstance().isUpdateOnlyEnabledPacks()) {
-                        boolean enabled = DynamicPackMod.getInstance().isResourcePackActive(pack);
+                        boolean enabled = DynamicPackMod.isResourcePackActive(pack);
                         if (!enabled) {
                             continue;
                         }

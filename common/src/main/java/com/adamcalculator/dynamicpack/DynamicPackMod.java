@@ -5,6 +5,8 @@ import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.Remote;
 import com.adamcalculator.dynamicpack.util.*;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
@@ -19,15 +21,14 @@ public abstract class DynamicPackMod {
 
 
 	private Loader loader = Loader.UNKNOWN;
-	private File gameDir;
-	private File resourcePacks;
-	private File configDir;
-	private File configFile;
+	private File gameDir; // .minecraft
+    private File configDir; // *gamedir*/config/dynamicpack
+	private File configFile; // *configDir*/config.json
 	private Config config;
 	private PacksContainer packsContainer;
 	private GameStartSyncing gameStartSyncing;
 
-	public DynamicPackMod() {
+	protected DynamicPackMod() {
 	}
 
 	private boolean minecraftInitialized = false;
@@ -41,8 +42,9 @@ public abstract class DynamicPackMod {
 		INSTANCE = this;
 		this.gameDir = gameDir;
 		this.loader = loader;
-		this.resourcePacks = new File(gameDir, "resourcepacks");
-		this.resourcePacks.mkdirs();
+        // *gamedir*/resourcepacks
+        File resourcePacks = new File(gameDir, "resourcepacks");
+		resourcePacks.mkdirs();
 		this.configDir = new File(gameDir, "config/dynamicpack");
 		this.configDir.mkdirs();
 		this.configFile = new File(configDir, "config.json");
@@ -53,8 +55,8 @@ public abstract class DynamicPackMod {
 		Remote.initRemoteTypes();
 		Out.init(loader);
 		Out.println("Mod version: " + SharedConstrains.VERSION_NAME + " build: " + SharedConstrains.VERSION_BUILD);
-		this.packsContainer = new PacksContainer();
-		this.packsContainer.rescan(resourcePacks);
+		this.packsContainer = new PacksContainer(resourcePacks);
+		this.packsContainer.rescan();
 
 		this.gameStartSyncing = new GameStartSyncing();
 		if (Config.getInstance().isAutoUpdateAtLaunch()) {
@@ -62,14 +64,7 @@ public abstract class DynamicPackMod {
 		}
 	}
 
-	public static DynamicPackMod getInstance() {
-		return INSTANCE;
-	}
-	
-	public void rescanPacks() {
-		packsContainer.rescan(resourcePacks);
-	}
-
+	// == ABSTRACT ==
 	public abstract boolean isModExists(String id);
 
 	/**
@@ -81,6 +76,20 @@ public abstract class DynamicPackMod {
 
 	public abstract void needResourcesReload();
 
+	public abstract String getCurrentGameVersion();
+
+	public abstract boolean checkResourcePackMetaValid(String s) throws Exception;
+	// __ ABSTRACT END __
+
+
+	/**
+	 * Singleton
+	 */
+	public static DynamicPackMod getInstance() {
+		return INSTANCE;
+	}
+
+
 	/**
 	 * API FOR MODPACKERS and etc all-in-one packs
 	 * @param host host to add.
@@ -91,12 +100,13 @@ public abstract class DynamicPackMod {
 		SharedConstrains.addAllowedHosts(host, requester);
 	}
 	
-	public boolean isNameIsDynamic(String name) {
+	public static boolean isNameIsDynamic(String name) {
 		return getDynamicPackByMinecraftName(name) != null;
 	}
 
-	public DynamicResourcePack getDynamicPackByMinecraftName(String name) {
-		for (DynamicResourcePack pack : getPacks()) {
+	@Nullable
+	public static DynamicResourcePack getDynamicPackByMinecraftName(String name) {
+		for (DynamicResourcePack pack : getPacksContainer().getPacks()) {
 			if (("file/" + pack.getName()).equals(name)) {
 				return pack;
 			}
@@ -104,7 +114,10 @@ public abstract class DynamicPackMod {
 		return null;
 	}
 
-	public boolean isResourcePackActive(DynamicResourcePack pack) {
+	/**
+	 * Check is resourcepack active
+	 */
+	public static boolean isResourcePackActive(DynamicResourcePack pack) {
 		List<String> lines;
 		try {
 			lines = Files.readAllLines(new File(getGameDir(), "options.txt").toPath(), StandardCharsets.UTF_8);
@@ -124,22 +137,6 @@ public abstract class DynamicPackMod {
 		return false;
 	}
 
-	public static File getGameDir() {
-		return INSTANCE.gameDir;
-	}
-
-	public static DynamicResourcePack[] getPacks() {
-		return INSTANCE.packsContainer.getPacks();
-	}
-
-	public static PacksContainer getPacksContainer() {
-		return INSTANCE.packsContainer;
-	}
-
-	public static Loader getLoader() {
-		return INSTANCE.loader;
-	}
-
 	public void minecraftInitialized() {
 		this.minecraftInitialized = true;
 	}
@@ -148,34 +145,38 @@ public abstract class DynamicPackMod {
 		return minecraftInitialized;
 	}
 
-	public abstract String getCurrentGameVersion();
-
-	public abstract boolean checkResourcePackMetaValid(String s) throws Exception;
-
-	public Path getResourcePackDir() {
-		return resourcePacks.toPath();
+	// STATIC
+	@NotNull
+	public static File getGameDir() {
+		return INSTANCE.gameDir;
 	}
 
-	public void blockRescan(boolean b) {
-		if (b) {
-			packsContainer.lockRescan();
-		} else {
-			packsContainer.unlockRescan();
-		}
+	@NotNull
+	public static PacksContainer getPacksContainer() {
+		return INSTANCE.packsContainer;
 	}
 
+	@NotNull
+	public static Loader getLoader() {
+		return INSTANCE.loader;
+	}
+
+	@NotNull
 	public static GameStartSyncing getGameStartSyncing() {
 		return INSTANCE.gameStartSyncing;
 	}
 
+	@NotNull
 	public static File getConfigDir() {
 		return INSTANCE.configDir;
 	}
 
+	@NotNull
 	public static File getConfigFile() {
 		return INSTANCE.configFile;
 	}
 
+	@NotNull
 	public static Config getConfig() {
 		return INSTANCE.config;
 	}

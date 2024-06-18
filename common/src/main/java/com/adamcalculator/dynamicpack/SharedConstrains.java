@@ -3,9 +3,11 @@ package com.adamcalculator.dynamicpack;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import io.netty.util.internal.MathUtil;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,8 +15,8 @@ public class SharedConstrains {
 
 
     public static final boolean DEBUG = true; // Don't forget to disable in release
-    public static final long VERSION_BUILD = 31;
-    public static final String VERSION_NAME_MOD = "1.0.31";
+    public static final long VERSION_BUILD = 32;
+    public static final String VERSION_NAME_MOD = "1.0.32";
     public static final String VERSION_NAME_BRANCH = "mc1.20";
     public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH + (DEBUG ? "-debug" : "");
     public static final String MOD_ID = "dynamicpack";
@@ -86,10 +88,14 @@ public class SharedConstrains {
         ALLOWED_HOSTS.add(host);
     }
 
+    public static String getUrlHost(String url) throws URISyntaxException {
+        URI uri = new URI(url);
+        return uri.getHost();
+    }
+
     public static boolean isUrlHostTrusted(String url) throws IOException {
         try {
-            URI uri = new URI(url);
-            String host = uri.getHost();
+            String host = getUrlHost(url);
             for (String allowedHost : ALLOWED_HOSTS) {
                 if (host.equals(allowedHost)) {
                     return true;
@@ -145,7 +151,7 @@ public class SharedConstrains {
     }
 
     // localhost allowed RELEASE=false
-    private static boolean isLocalHostAllowed() {
+    public static boolean isLocalHostAllowed() {
         return DEBUG;
     }
 
@@ -159,10 +165,6 @@ public class SharedConstrains {
         return false;
     }
 
-    // DebugScreen allowed
-    public static boolean isDebugScreenAllowed() {
-        return DEBUG;
-    }
 
     public static void debugNetwork(int bytesRead, long total) {
         if (isRelease()) return;

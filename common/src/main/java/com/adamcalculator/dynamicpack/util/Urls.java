@@ -73,7 +73,7 @@ public class Urls {
         if (url.contains(" ")) {
             throw new IOException("URL can't contains spaces!");
         }
-        InputValidator.isUrlValid(url);
+        InputValidator.throwIsUrlInvalid(url);
 
 
         if (url.startsWith("file_debug_only://")) {

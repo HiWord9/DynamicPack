@@ -64,7 +64,6 @@ public class DynamicRepoPreferences {
     }
 
     private void updateKnownGuis(JsonArray guis) {
-
         if (guis != null) {
             validateGuis(guis);
             cachedCurrentJson.add("known_guis", guis);

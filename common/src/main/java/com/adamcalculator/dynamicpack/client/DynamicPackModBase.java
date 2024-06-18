@@ -43,6 +43,7 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
         if (toast == null || (System.currentTimeMillis() - toastUpdated > 1000*5)) {
             ToastComponent toastManager = Minecraft.getInstance().getToasts();
             toastManager.addToast(toast = new SystemToast(SystemToast.SystemToastIds.NARRATOR_TOGGLE, title, text));
+
         } else {
             toast.reset(title, text);
         }
@@ -113,14 +114,12 @@ public abstract class DynamicPackModBase extends DynamicPackMod {
     @Override
     public void needResourcesReload() {
         Minecraft client = Minecraft.getInstance();
-        if (client != null) {
-            if (client.level == null) {
-                client.execute(client::reloadResourcePacks);
+        if (client != null && client.level == null) {
+            client.execute(client::reloadResourcePacks);
 
-            } else {
-                setToastContent(Component.translatable("dynamicpack.toast.needReload"),
-                        Component.translatable("dynamicpack.toast.needReload.description"));
-            }
+        } else {
+            setToastContent(Component.translatable("dynamicpack.toast.needReload"),
+                    Component.translatable("dynamicpack.toast.needReload.description"));
         }
     }
 }

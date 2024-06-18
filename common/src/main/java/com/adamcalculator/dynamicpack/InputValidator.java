@@ -1,9 +1,15 @@
 package com.adamcalculator.dynamicpack;
 
+import com.adamcalculator.dynamicpack.util.Out;
+
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+/**
+ * Validates for [user/resourecepack-creator] input values
+ */
 public class InputValidator {
     private static final Pattern CONTENT_ID_PATTERN = Pattern.compile("^[a-z0-9_:-]{2,128}$");
     private static final Pattern PATH_PATTERN = Pattern.compile("^[A-Za-z0-9_./() +-]{0,255}$");
@@ -80,6 +86,13 @@ public class InputValidator {
      * @return is url string is valid
      */
     public static boolean isUrlValid(String url) {
+        try {
+            if (SharedConstrains.isLocalHostAllowed() && SharedConstrains.getUrlHost(url).equals("localhost")) {
+                Out.warn("isUrlValid return true for localhost! It behavior only when isLocalHostAllowed()=true");
+                return true;
+            }
+        } catch (URISyntaxException ignored) {}
+
         return URL_PATTERN.matcher(url).matches();
     }
 

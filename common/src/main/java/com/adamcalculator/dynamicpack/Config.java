@@ -11,7 +11,9 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 
 public class Config {
-    public static final Config DEF = new Config();
+    public static final Config DEF = createDefConfig();
+
+    private transient boolean def;
 
     private int formatVersion = 1; // do not touch
     private int networkBufferSize = 1024;
@@ -21,8 +23,19 @@ public class Config {
     private boolean updateOnlyEnabledPacks = true;
     private boolean debugIgnoreHiddenFlagInContents = false;
 
+    private static Config createDefConfig() {
+        Config config = new Config();
+        config.def = true;
+        return config;
+    }
+
 
     public static Config load() {
+        //noinspection ConstantValue
+        if (getInstance() != null) {
+            throw new RuntimeException("Config already loaded");
+        }
+
         File file = DynamicPackMod.getConfigFile();
         if (!file.exists()) {
             Config cfg = new Config();
@@ -40,6 +53,7 @@ public class Config {
         } catch (Exception e) {
             Out.error("Config load failed (return default config)", e);
         }
+
         Config config = new Config();
         updateStaticVariables(config);
         return config;
@@ -78,6 +92,10 @@ public class Config {
     }
 
     public void save() {
+        if (def) {
+            throw new RuntimeException("Can't be save a DEF config!");
+        }
+
         try {
             String json = SharedConstrains.GSON.toJson(this);
 

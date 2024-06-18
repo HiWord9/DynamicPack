@@ -68,6 +68,6 @@ public class PackMixinHelper {
     }
 
     public static void updatePacksMinecraftRequest() {
-        DynamicPackMod.getInstance().rescanPacks();
+        DynamicPackMod.getPacksContainer().rescan();
     }
 }

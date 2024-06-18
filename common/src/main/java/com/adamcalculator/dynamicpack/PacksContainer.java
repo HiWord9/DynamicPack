@@ -17,6 +17,7 @@ public class PacksContainer {
 
     private boolean rescanPacksBlocked = false;
     private boolean isPacksScanning = false;
+    private File directoryToCheck;
 
     /**
      * Currently dynamic packs
@@ -27,7 +28,8 @@ public class PacksContainer {
      */
     private final HashMap<String, DynamicResourcePack> packs = new HashMap<>();
 
-    public PacksContainer() {
+    public PacksContainer(File directoryToCheck) {
+        this.directoryToCheck = directoryToCheck;
     }
 
     public void lockRescan() {
@@ -38,7 +40,7 @@ public class PacksContainer {
         rescanPacksBlocked = false;
     }
 
-    public void rescan(File resourcePacks) {
+    public void rescan() {
         if (isPacksScanning) {
             Out.warn("Already in scanning!");
             return;
@@ -51,7 +53,13 @@ public class PacksContainer {
 
         isPacksScanning = true;
         List<String> forDelete = new ArrayList<>(packs.keySet());
-        for (File packFile : PathsUtil.listFiles(resourcePacks)) {
+        for (File packFile : PathsUtil.listFiles(directoryToCheck)) {
+            DynamicResourcePack currentDynamicPack = DynamicPackMod.getDynamicPackByMinecraftName("file/" + packFile.getName());
+            if (currentDynamicPack.isSyncing()) {
+                Out.warn("WARNING: Found a pack that is now synchronizing. skipping this pack");
+                continue;
+            }
+
             try {
                 PackUtil.openPackFileSystem(packFile, packPath -> {
                     Path clientFile = packPath.resolve(SharedConstrains.CLIENT_FILE);
@@ -75,7 +83,7 @@ public class PacksContainer {
             }
         }
         for (String s : forDelete) {
-            Out.println("Pack " + s + " no longer exists!");
+            Out.println("Pack " + s + " no longer exist or no longer support DynamicPack!");
             packs.remove(s);
         }
         isPacksScanning = false;
