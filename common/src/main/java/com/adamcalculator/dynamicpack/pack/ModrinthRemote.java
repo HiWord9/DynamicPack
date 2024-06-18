@@ -97,7 +97,7 @@ public class ModrinthRemote extends Remote {
                 File tempFile = null;
                 int attempts = SharedConstrains.MAX_ATTEMPTS_TO_DOWNLOAD_FILE;
                 while (attempts > 0) {
-                    tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_download", ".zip", SharedConstrains.MODRINTH_HTTPS_FILE_SIZE_LIMIT, urlsController = new UrlsController() {
+                    tempFile = Urls.downloadFileToTemp(latest.url, "dynamicpack_modrinth", ".zip", SharedConstrains.MODRINTH_HTTPS_FILE_SIZE_LIMIT, urlsController = new UrlsController() {
                         @Override
                         public void onUpdate(UrlsController it) {
                             float percentage = it.getPercentage();
@@ -125,7 +125,7 @@ public class ModrinthRemote extends Remote {
                 cachedCurrentJson.remove("version_number");
                 parent.updateJsonLatestUpdate();
 
-                // save client json
+                // save client json to temp file
                 PackUtil.openPackFileSystem(tempFile, packRootPath -> parent.saveClientFile(packRootPath));
 
                 if (parent.isZip()) {

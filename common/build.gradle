@@ -26,8 +26,6 @@ loom {
 }
 
 dependencies {
-    implementation("net.lingala.zip4j:zip4j:2.11.5")
-
     modImplementation("dev.isxander:yet-another-config-lib:3.4.1+1.20.1-fabric")
 
     minecraft "com.mojang:minecraft:${minecraft_version}"

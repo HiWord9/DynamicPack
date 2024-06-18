@@ -1,8 +1,5 @@
 package com.adamcalculator.dynamicpack.util;
 
-import com.adamcalculator.dynamicpack.SharedConstrains;
-import net.lingala.zip4j.ZipFile;
-import net.lingala.zip4j.model.UnzipParameters;
 import org.apache.commons.io.FileUtils;
 
 import java.io.File;
@@ -43,8 +40,9 @@ public class PathsUtil {
 
     /**
      * Move a file source to dest place
+     *
      * @param source file from
-     * @param dest file to
+     * @param dest   file to
      */
     public static void moveFile(File source, File dest) throws IOException {
         Files.move(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -52,33 +50,24 @@ public class PathsUtil {
 
     /**
      * Extract a zipFilePath to dir
+     *
      * @param zipFilePath file.zip
      * @param dir for example /resourcepacks/Pack1/
      */
     public static void unzip(File zipFilePath, File dir) throws Exception {
-        if (SharedConstrains.USE_ZIP4J_FOR_UNZIP) {
-            UnzipParameters unzipParameters = new UnzipParameters();
-            unzipParameters.setExtractSymbolicLinks(false);
-            ZipFile zip = new ZipFile(zipFilePath);
-            zip.extractAll(dir.getPath(), unzipParameters);
-            zip.close();
+        PackUtil.openPackFileSystem(zipFilePath, zip -> {
+            Set<String> buffer = new HashSet<>();
+            walkScan(buffer, zip);
 
-        } else {
-            // untested code
-            PackUtil.openPackFileSystem(zipFilePath, zip -> {
-                Set<String> buffer = new HashSet<>();
-                walkScan(buffer, zip);
+            for (String relative : buffer) {
+                Path path = zip.resolve(relative);
+                Path toPath = dir.toPath().resolve(relative);
 
-                for (String relative : buffer) {
-                    Path path = zip.resolve(relative);
-                    Path toPath = dir.toPath().resolve(relative);
+                createDirsToFile(toPath);
 
-                    createDirsToFile(toPath);
-
-                    Files.copy(path, toPath, StandardCopyOption.REPLACE_EXISTING);
-                }
-            });
-        }
+                Files.copy(path, toPath, StandardCopyOption.REPLACE_EXISTING);
+            }
+        });
     }
 
 
