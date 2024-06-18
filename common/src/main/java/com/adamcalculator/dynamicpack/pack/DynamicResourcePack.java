@@ -53,6 +53,7 @@ public class DynamicResourcePack extends AbstractPack {
         return new SyncBuilder() {
             // builder from remote
             private SyncBuilder builder;
+            private boolean notUpdate = false;
 
             private void wrapThrowable(ThrowingFunction<Exception> fun) {
                 wrapThrowableRet(() -> {
@@ -67,6 +68,7 @@ public class DynamicResourcePack extends AbstractPack {
                 } catch (Exception e) {
                     isSyncing = false;
                     setLatestException(e);
+                    notUpdate = true;
                     error("Error while doUpdate (or init) SyncBuilder", e);
                 }
                 return def;
@@ -87,22 +89,34 @@ public class DynamicResourcePack extends AbstractPack {
 
             @Override
             public long getDownloadedSize() {
+                if (notUpdate) {
+                    return 0;
+                }
                 return wrapThrowableRet(() -> builder.getDownloadedSize(), -1L);
-
             }
 
             @Override
             public boolean isUpdateAvailable() {
+                if (notUpdate) {
+                    return false;
+                }
                 return wrapThrowableRet(() -> builder.isUpdateAvailable(), false);
             }
 
             @Override
             public long getUpdateSize() {
+                if (notUpdate) {
+                    return 0;
+                }
                 return wrapThrowableRet(() -> builder.getUpdateSize(), -1L);
             }
 
             @Override
             public boolean doUpdate(SyncProgress progress) {
+                if (notUpdate) {
+                    return false;
+                }
+
                 SyncingTask.currentPackName = getName();
                 return wrapThrowableRet(() -> {
                     activeSyncBuilder = this;

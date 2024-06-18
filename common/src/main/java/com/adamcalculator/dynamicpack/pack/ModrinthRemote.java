@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import java.io.File;
 import java.io.IOException;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 
 /**
  * Remote for remote.type = "modrinth"
@@ -58,6 +59,7 @@ public class ModrinthRemote extends Remote {
             private UrlsController urlsController;
             private LatestModrinthVersion latest;
             private JsonObject latestJson;
+            private Optional<Boolean> isUpdateAvailable = Optional.empty();
             private long downloaded;
 
             @Override
@@ -73,7 +75,12 @@ public class ModrinthRemote extends Remote {
 
             @Override
             public boolean isUpdateAvailable() {
-                return _isUpdateAvailable(latestJson);
+                if (isUpdateAvailable.isPresent()) {
+                    return isUpdateAvailable.get();
+                }
+                boolean b = _isUpdateAvailable(latestJson);
+                isUpdateAvailable = Optional.of(b);
+                return b;
             }
 
             @Override

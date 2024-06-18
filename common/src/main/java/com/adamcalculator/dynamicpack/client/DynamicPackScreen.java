@@ -62,13 +62,6 @@ public class DynamicPackScreen extends Screen {
         Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.description").getString(999), 20, 20 + h, width - 125, 2, ChatFormatting.GREEN.getColor());
         Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.remote_type", pack.getRemoteType()), 20, 40 + h, 16777215);
 
-        h += 4;
-        Exception exception = pack.getLatestException();
-        if (exception != null) {
-            Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.latestException", TranslatableException.getComponentFromException(exception)).getString(512), 20, 78 + h, width - 40, 99, 0xff2222);
-            h+=10;
-        }
-
         if (SyncingTask.isSyncing()) {
             Compat.drawWrappedString(context, SyncingTask.getLogs(), 20, 78+30 + h, 500, 99, 0xCCCCCC);
 
@@ -90,9 +83,13 @@ public class DynamicPackScreen extends Screen {
 
         } else {
             Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
+
+            h += 4;
+            Exception exception = pack.getLatestException();
+            if (exception != null) {
+                Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.latestException", TranslatableException.getComponentFromException(exception)).getString(512), 20, 78 + h, width - 40, 4, 0xff2222);
+            }
         }
-
-
 
         super.render(context, mouseX, mouseY, delta);
     }

@@ -269,7 +269,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
         NetworkStat.speedMultiplier = DOWNLOAD_THREADS_COUNT;
         Path tempPath;
         if (pack.isZip()) {
-            tempPath = new File(System.getProperty("java.io.tmpdir") + File.pathSeparator + SharedConstrains.TEMP_DIR_NAME + pack.getName()).toPath();
+            tempPath = new File(System.getProperty("java.io.tmpdir") + File.separator + SharedConstrains.TEMP_DIR_NAME, pack.getName()).toPath();
             if (!Files.exists(tempPath)) {
                 PathsUtil.createDirsToFile(tempPath);
                 Files.createDirectory(tempPath);
