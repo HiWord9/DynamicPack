@@ -14,8 +14,9 @@ public class SharedConstrains {
 
 
     public static final boolean DEBUG = true; // Don't forget to disable in release
-    public static final long VERSION_BUILD = 33;
-    public static final String VERSION_NAME_MOD = "1.0.33";
+    public static final boolean DEBUG_ALLOW_UNSECURE = false;
+    public static final long VERSION_BUILD = 34;
+    public static final String VERSION_NAME_MOD = "1.0.34";
     public static final String VERSION_NAME_BRANCH = "mc1.20";
     public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH + (DEBUG ? "-debug" : "");
     public static final String MOD_ID = "dynamicpack";
@@ -151,12 +152,12 @@ public class SharedConstrains {
 
     // localhost allowed RELEASE=false
     public static boolean isLocalHostAllowed() {
-        return DEBUG;
+        return DEBUG_ALLOW_UNSECURE;
     }
 
     // file_debug_only:// allowed RELEASE=false
     public static boolean isFileDebugSchemeAllowed() {
-        return DEBUG;
+        return DEBUG_ALLOW_UNSECURE;
     }
 
     // http:// allowed RELEASE=false
