@@ -2,7 +2,6 @@ package com.adamcalculator.dynamicpack.client.mixin;
 
 import com.adamcalculator.dynamicpack.client.FilePackResourcesAccessor;
 import com.adamcalculator.dynamicpack.util.LockUtils;
-import com.adamcalculator.dynamicpack.util.PackUtil;
 import net.minecraft.server.packs.FilePackResources;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

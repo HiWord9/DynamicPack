@@ -3,7 +3,8 @@ package com.adamcalculator.dynamicpack;
 import com.adamcalculator.dynamicpack.client.GameStartSyncing;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.pack.Remote;
-import com.adamcalculator.dynamicpack.util.*;
+import com.adamcalculator.dynamicpack.util.Loader;
+import com.adamcalculator.dynamicpack.util.Out;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.List;
 
 public abstract class DynamicPackMod {

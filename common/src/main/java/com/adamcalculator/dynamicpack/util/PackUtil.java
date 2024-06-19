@@ -11,7 +11,8 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class PackUtil {
     public static void openPackFileSystem(File file, ThrowingConsumer<Exception, Path> consumer) throws Exception {

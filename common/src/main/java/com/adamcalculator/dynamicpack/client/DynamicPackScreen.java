@@ -3,8 +3,8 @@ package com.adamcalculator.dynamicpack.client;
 import com.adamcalculator.dynamicpack.Config;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
-import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
+import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
 import com.adamcalculator.dynamicpack.sync.SyncingTask;
 import com.adamcalculator.dynamicpack.util.NetworkStat;
 import com.adamcalculator.dynamicpack.util.TranslatableException;
@@ -19,6 +19,7 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.text.DateFormat;
 import java.util.Date;
 import java.util.function.Consumer;
 
@@ -82,7 +83,12 @@ public class DynamicPackScreen extends Screen {
             Compat.drawWrappedString(context, Component.translatable("dynamicpack.screen.pack.updateStat", SharedConstrains.speedToString(NetworkStat.getSpeed()), SharedConstrains.secondsToString(SyncingTask.eta), percentage, "["+asciiPercentage+"]").getString(512), 20, 52 + h, width, 3, Color.getHSBColor((float)Math.sin(System.currentTimeMillis()/1850d), 0.6f, 0.6f).getRGB());
 
         } else {
-            Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", pack.getLatestUpdated() < 0 ? "-" : new Date(pack.getLatestUpdated() * 1000)), 20, 52 + h, 16777215);
+            long latestUpdated;
+            if ((latestUpdated = pack.getLatestUpdated()) > 0) {
+                Date date = new Date(latestUpdated * 1000);
+                String string = DateFormat.getDateTimeInstance().format(date);
+                Compat.drawString(context, this.font, Component.translatable("dynamicpack.screen.pack.latestUpdated", string), 20, 52 + h, 16777215);
+            }
 
             h += 4;
             Exception exception = pack.getLatestException();
@@ -142,7 +148,7 @@ public class DynamicPackScreen extends Screen {
 
     @Override
     public void onClose() {
-        this.minecraft.setScreen(parent);
+        Minecraft.getInstance().setScreen(parent);
         pack.removeDestroyListener(destroyListener);
     }
 }

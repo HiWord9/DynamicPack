@@ -3,7 +3,6 @@ package com.adamcalculator.dynamicpack;
 import com.adamcalculator.dynamicpack.util.Out;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import io.netty.util.internal.MathUtil;
 
 import java.io.IOException;
 import java.net.URI;

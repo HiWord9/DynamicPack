@@ -4,7 +4,6 @@ import com.adamcalculator.dynamicpack.InputValidator;
 import com.adamcalculator.dynamicpack.SharedConstrains;
 import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
-import com.adamcalculator.dynamicpack.util.PackUtil;
 import com.adamcalculator.dynamicpack.sync.SyncProgress;
 import com.adamcalculator.dynamicpack.util.*;
 import com.google.gson.JsonArray;
@@ -18,7 +17,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
 import java.util.stream.Collectors;
 
 public class DynamicRepoSyncBuilder implements SyncBuilder {

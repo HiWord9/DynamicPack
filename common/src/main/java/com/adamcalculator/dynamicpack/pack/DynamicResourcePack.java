@@ -2,11 +2,11 @@ package com.adamcalculator.dynamicpack.pack;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
 import com.adamcalculator.dynamicpack.SharedConstrains;
-import com.adamcalculator.dynamicpack.sync.SyncProgress;
+import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.adamcalculator.dynamicpack.sync.SyncBuilder;
+import com.adamcalculator.dynamicpack.sync.SyncProgress;
 import com.adamcalculator.dynamicpack.sync.SyncingTask;
 import com.adamcalculator.dynamicpack.util.*;
-import com.adamcalculator.dynamicpack.status.StatusChecker;
 import com.google.gson.JsonObject;
 import org.jetbrains.annotations.Nullable;
 

@@ -1,12 +1,12 @@
 package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.DynamicPackMod;
+import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
+import com.adamcalculator.dynamicpack.pack.OverrideType;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.BaseContent;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.BaseEnum;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoPreferences;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoRemote;
-import com.adamcalculator.dynamicpack.pack.DynamicResourcePack;
-import com.adamcalculator.dynamicpack.pack.OverrideType;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -17,7 +17,10 @@ import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.function.Consumer;
 
 public class ContentsScreen extends Screen {
@@ -82,7 +85,7 @@ public class ContentsScreen extends Screen {
     public void onClose() {
         applyChanges();
 
-        this.minecraft.setScreen(this.parent);
+        Minecraft.getInstance().setScreen(this.parent);
         pack.removeDestroyListener(onPackReSync);
         if (syncOnExit) {
             DynamicPackMod.getInstance().startManuallySync(pack);

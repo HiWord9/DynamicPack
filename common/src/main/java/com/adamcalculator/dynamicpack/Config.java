@@ -4,7 +4,6 @@ package com.adamcalculator.dynamicpack;
 import com.adamcalculator.dynamicpack.pack.dynamicrepo.DynamicRepoSyncBuilder;
 import com.adamcalculator.dynamicpack.util.FilesLog;
 import com.adamcalculator.dynamicpack.util.Out;
-
 import com.adamcalculator.dynamicpack.util.PathsUtil;
 
 import java.io.File;
