@@ -312,9 +312,7 @@ public class DynamicResourcePack extends AbstractPack {
 
 
     public void debug(String s) {
-        if (SharedConstrains.DEBUG) {
-            Out.debug("{%s} %s".formatted(getName(), s));
-        }
+        Out.debug("{%s} %s".formatted(getName(), s));
     }
 
     public void error(String s, Throwable e) {

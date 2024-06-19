@@ -23,6 +23,7 @@ public class Config {
     private boolean autoUpdateAtLaunch = true;
     private boolean updateOnlyEnabledPacks = true;
     private boolean debugIgnoreHiddenFlagInContents = false;
+    private boolean debugLogs = false;
 
     private static Config createDefConfig() {
         Config config = new Config();
@@ -64,6 +65,7 @@ public class Config {
         config.checkAndValidateConfig();
 
         SharedConstrains.URLS_BUFFER_SIZE = config.networkBufferSize;
+        SharedConstrains.DEBUG_LOGS = config.debugLogs;
         DynamicRepoSyncBuilder.DOWNLOAD_THREADS_COUNT = config.networkMultithreadDownloadThreads;
         FilesLog.LOG_ALL_CHANGES = config.logAllFilesChanges;
     }

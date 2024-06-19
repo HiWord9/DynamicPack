@@ -472,9 +472,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
     }
 
     private void debug(String s) {
-        if (SharedConstrains.DEBUG) {
-            pack.debug(s);
-        }
+        pack.debug(s);
     }
 
     private void error(String s, Throwable e) {
