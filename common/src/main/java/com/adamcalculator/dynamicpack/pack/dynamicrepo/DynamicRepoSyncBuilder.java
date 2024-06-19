@@ -56,7 +56,13 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
 
         if (updateAvailable) {
-            String packUrlContent = Urls.parseTextContent(remote.getPackUrl(), SharedConstrains.MOD_FILES_LIMIT, null);
+            String packUrlContent = Urls.parseTextContent(remote.getPackUrl(), SharedConstrains.MOD_FILES_LIMIT, new UrlsController() {
+                @Override
+                public boolean isInterrupted() {
+                    return interrupted;
+                }
+            });
+
             repoJson = JsonUtils.fromString(packUrlContent);
             long formatVersion;
             if ((formatVersion = JsonUtils.getLong(repoJson, "formatVersion")) != 1) {
@@ -124,7 +130,7 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
             internalProcessDynamicFiles(progress, packFileSystem);
 
             debug("DELETE LIST: " + oldestFilesList);
-            if (!doNotDeleteOldestFiles) {
+            if (!doNotDeleteOldestFiles && !interrupted) {
                 progress.setPhase("Deleting unnecessary files");
                 for (String s : oldestFilesList) {
                     final Path pathToFile = packFileSystem.resolve(s);
@@ -201,6 +207,10 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
 
             int processedFiles = 0;
             for (final String _relativePath : files.keySet()) {
+                if (interrupted) {
+                    return;
+                }
+
                 boolean pathValidated = false;
                 try {
                     // string path *parent*/*key_name*
@@ -287,11 +297,16 @@ public class DynamicRepoSyncBuilder implements SyncBuilder {
                     .map(file -> {
                         var s = CompletableFuture.supplyAsync(() -> {
                             try {
+                                if (interrupted) {
+                                    throw new InterruptedException("Interrupted");
+                                }
+
                                 downloadFile((tempPath != null ? tempPath : packFileSystem), file, progress);
                             } catch (Exception e) {
                                 throw new RuntimeException(e);
                             }
                             return file;
+
                         }, executor).exceptionally(th -> {
                             error("Error while download a file", th);
                             return null;

@@ -2,6 +2,7 @@ package com.adamcalculator.dynamicpack.client;
 
 import com.adamcalculator.dynamicpack.Config;
 import com.adamcalculator.dynamicpack.DynamicPackMod;
+import com.adamcalculator.dynamicpack.sync.SyncingTask;
 import dev.isxander.yacl3.api.*;
 import dev.isxander.yacl3.api.controller.BooleanControllerBuilder;
 import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
@@ -71,6 +72,32 @@ public class ConfigScreenBuilder {
                                     DynamicPackMod.getConfig().setDebugIgnoreHiddenFlagInContents(newVal);
                                 })
                                 .controller(TickBoxControllerBuilder::create).build())
+
+                        .option(Option.<Boolean>createBuilder()
+                                .name(Component.literal("INTERRUPT UPDATING"))
+                                .description(OptionDescription.of(Component.literal("EXPERIMENTAL FUNCTIONAL")))
+                                .binding(new Binding<>() {
+                                    @Override
+                                    public void setValue(Boolean value) {
+                                        var builder = SyncingTask.currentRootSyncBuilder;
+
+                                        if (builder != null) {
+                                            builder.interrupt();
+                                        }
+                                    }
+
+                                    @Override
+                                    public Boolean getValue() {
+                                        return false;
+                                    }
+
+                                    @Override
+                                    public Boolean defaultValue() {
+                                        return false;
+                                    }
+                                })
+                                .controller(TickBoxControllerBuilder::create)
+                                .build())
 
                         .build())
                 .build();
