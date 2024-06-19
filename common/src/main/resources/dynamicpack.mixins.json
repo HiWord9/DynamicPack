@@ -9,7 +9,8 @@
     "ResourcePackEntryMixin",
     "ResourcePackScreenMixin",
     "PackRepositoryMixin",
-    "FilePackResourcesMixin"
+    "FilePackResourcesMixin",
+    "TitleScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

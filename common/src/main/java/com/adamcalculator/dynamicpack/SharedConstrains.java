@@ -11,10 +11,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class SharedConstrains {
-
-
+    // DISABLE ALL DEBUG IN OFFICIAL RELEASES
     public static final boolean DEBUG = true; // Don't forget to disable in release
     public static final boolean DEBUG_ALLOW_UNSECURE = false;
+    public static final boolean DEBUG_LOGS = false;
+
     public static final long VERSION_BUILD = 34;
     public static final String VERSION_NAME_MOD = "1.0.34";
     public static final String VERSION_NAME_BRANCH = "mc1.20";
@@ -178,7 +179,7 @@ public class SharedConstrains {
     }
 
     public static boolean isDebugLogs() {
-        return DEBUG;
+        return DEBUG_LOGS;
     }
 
     public static boolean isDebugMessageOnWorldJoin() {
