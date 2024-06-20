@@ -16,7 +16,7 @@ public class SharedConstrains {
     public static final boolean DEBUG_ALLOW_UNSECURE = false;
     public static boolean DEBUG_LOGS = false;
 
-    public static final long VERSION_BUILD = 35;
+    public static final long VERSION_BUILD = 40;
     public static final String VERSION_NAME_MOD = "1.1";
     public static final String VERSION_NAME_BRANCH = "mc1.20.1";
     public static final String VERSION_NAME =  VERSION_NAME_MOD + "+" + VERSION_NAME_BRANCH + (DEBUG ? "-debug" : "");
