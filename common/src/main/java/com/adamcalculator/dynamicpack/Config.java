@@ -18,7 +18,7 @@ public class Config {
 
     private int formatVersion = 1; // do not touch
     private int networkBufferSize = 1024;
-    private int networkMultithreadDownloadThreads = 8;
+    private int networkMultithreadDownloadThreads = 12;
     private boolean logAllFilesChanges = false;
     private boolean autoUpdateAtLaunch = true;
     private boolean updateOnlyEnabledPacks = true;
